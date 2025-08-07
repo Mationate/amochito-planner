@@ -57,6 +57,7 @@ const api = {
   }
 };
 import { Plus, Check, X, Edit2, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DndContext,
   DragEndEvent,
@@ -293,12 +294,14 @@ export default function WeeklyPlanner() {
           <div className="rounded-xl shadow-sm p-6 transition-colors duration-300 bg-white dark:bg-gray-800">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <button
+              <Button
                 onClick={() => navigateWeek('prev')}
-                className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                variant="ghost"
+                size="icon"
+                className="hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <ChevronLeft size={20} className="text-gray-600 dark:text-gray-300" />
-              </button>
+              </Button>
               
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -315,21 +318,23 @@ export default function WeeklyPlanner() {
                 </p>
               </div>
               
-              <button
+              <Button
                 onClick={() => navigateWeek('next')}
-                className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                variant="ghost"
+                size="icon"
+                className="hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <ChevronRight size={20} className="text-gray-600 dark:text-gray-300" />
-              </button>
+              </Button>
             </div>
             
-            <button
+            <Button
               onClick={goToCurrentWeek}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2"
             >
               <Calendar size={16} />
               Semana Actual
-            </button>
+            </Button>
           </div>
 
           {/* Estadísticas */}
@@ -437,20 +442,22 @@ export default function WeeklyPlanner() {
                           ))}
                         </select>
                         <div className="flex gap-2">
-                          <button
+                          <Button
                             onClick={() => handleAddTaskToDay(dayInfo.dayName)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                            className="bg-green-600 hover:bg-green-700"
+                            size="sm"
                           >
                             <Check size={14} />
                             Guardar
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={cancelAddingTask}
-                            className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
+                            variant="secondary"
+                            size="sm"
                           >
                             <X size={14} />
                             Cancelar
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -504,22 +511,26 @@ export default function WeeklyPlanner() {
                               ))}
                             </select>
                             <div className="flex gap-2">
-                              <button
+                              <Button
                                 onClick={() => handleEditTask(task.id, editTitle)}
-                                className="p-2 text-green-600 rounded-lg transition-colors hover:bg-green-100 dark:hover:bg-green-800"
+                                variant="ghost"
+                                size="icon"
+                                className="text-green-600 hover:bg-green-100 dark:hover:bg-green-800"
                               >
                                 <Check size={16} />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 onClick={() => {
                                   setEditingTask(null);
                                   setEditTitle('');
                                   setEditCategory('other');
                                 }}
-                                className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
                               >
                                 <X size={16} />
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -547,18 +558,22 @@ export default function WeeklyPlanner() {
                               </span>
                             </div>
                             <div className="flex gap-1">
-                              <button
+                              <Button
                                 onClick={() => startEditing(task)}
-                                className="p-2 rounded-lg transition-colors text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900"
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900 h-8 w-8"
                               >
                                 <Edit2 size={14} />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 onClick={() => handleDeleteTask(task.id)}
-                                className="p-2 rounded-lg transition-colors text-gray-400 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900"
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900 h-8 w-8"
                               >
                                 <Trash2 size={14} />
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
