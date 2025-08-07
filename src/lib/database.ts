@@ -286,5 +286,64 @@ export const database = {
       console.error('Error desactivando configuración de notificación:', error);
       return null;
     }
+  },
+
+  // Funciones para manejar preferencias de usuario
+  async getUserPreferences(userId: string) {
+    try {
+      const preferences = await prisma.userPreferences.findUnique({
+        where: { userId }
+      });
+      return preferences;
+    } catch (error) {
+      console.error('Error obteniendo preferencias de usuario:', error);
+      return null;
+    }
+  },
+
+  async createUserPreferences(userId: string, theme: string = 'system', colorTheme: string = 'default') {
+    try {
+      const preferences = await prisma.userPreferences.create({
+        data: {
+          userId,
+          theme,
+          colorTheme
+        }
+      });
+      return preferences;
+    } catch (error) {
+      console.error('Error creando preferencias de usuario:', error);
+      return null;
+    }
+  },
+
+  async updateUserPreferences(userId: string, updates: { theme?: string; colorTheme?: string }) {
+    try {
+      const preferences = await prisma.userPreferences.upsert({
+        where: { userId },
+        update: updates,
+        create: {
+          userId,
+          theme: updates.theme || 'system',
+          colorTheme: updates.colorTheme || 'default'
+        }
+      });
+      return preferences;
+    } catch (error) {
+      console.error('Error actualizando preferencias de usuario:', error);
+      return null;
+    }
+  },
+
+  async deleteUserPreferences(userId: string) {
+    try {
+      await prisma.userPreferences.delete({
+        where: { userId }
+      });
+      return true;
+    } catch (error) {
+      console.error('Error eliminando preferencias de usuario:', error);
+      return false;
+    }
   }
 };

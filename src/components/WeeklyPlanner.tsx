@@ -569,17 +569,17 @@ export default function WeeklyPlanner() {
 
   if (loading) {
     return (
-      <div className="w-screen flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900">
+      <div className="w-screen flex items-center justify-center min-h-[400px] bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Cargando tareas...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando tareas...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen w-screen transition-colors duration-300 bg-background">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -588,23 +588,23 @@ export default function WeeklyPlanner() {
       >
         <div className="space-y-6 p-4">
           {/* Navegación de semanas */}
-          <div className="rounded-xl shadow-sm p-6 transition-colors duration-300 bg-white dark:bg-gray-800">
+          <div className="rounded-xl shadow-sm p-6 transition-colors duration-300 bg-card">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <Button
                 onClick={() => navigateWeek('prev')}
                 variant="ghost"
                 size="icon"
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="hover:bg-muted"
               >
-                <ChevronLeft size={20} className="text-gray-600 dark:text-gray-300" />
+                <ChevronLeft size={20} className="text-muted-foreground" />
               </Button>
               
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-2xl font-bold text-foreground">
                   Semana {currentWeek.weekNumber}, {currentWeek.year}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {currentWeek.weekStart.toLocaleDateString('es-ES', { 
                     day: 'numeric', 
                     month: 'long' 
@@ -619,9 +619,9 @@ export default function WeeklyPlanner() {
                 onClick={() => navigateWeek('next')}
                 variant="ghost"
                 size="icon"
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="hover:bg-muted"
               >
-                <ChevronRight size={20} className="text-gray-600 dark:text-gray-300" />
+                <ChevronRight size={20} className="text-muted-foreground" />
               </Button>
             </div>
             
@@ -636,21 +636,21 @@ export default function WeeklyPlanner() {
 
           {/* Estadísticas */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 rounded-lg bg-blue-50 dark:bg-blue-900">
-              <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-              <div className="text-sm text-blue-700 dark:text-blue-300">Total</div>
+            <div className="text-center p-4 rounded-lg bg-primary/10">
+              <div className="text-2xl font-bold text-primary">{stats.total}</div>
+              <div className="text-sm text-primary/80">Total</div>
             </div>
-            <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900">
-              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-              <div className="text-sm text-green-700 dark:text-green-300">Completadas</div>
+            <div className="text-center p-4 rounded-lg bg-accent/10">
+              <div className="text-2xl font-bold text-accent">{stats.completed}</div>
+              <div className="text-sm text-accent/80">Completadas</div>
             </div>
-            <div className="text-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900">
-              <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-              <div className="text-sm text-orange-700 dark:text-orange-300">Pendientes</div>
+            <div className="text-center p-4 rounded-lg bg-muted">
+              <div className="text-2xl font-bold text-foreground">{stats.pending}</div>
+              <div className="text-sm text-muted-foreground">Pendientes</div>
             </div>
-            <div className="text-center p-4 rounded-lg bg-purple-50 dark:bg-purple-900">
-              <div className="text-2xl font-bold text-purple-600">{stats.completionRate}%</div>
-              <div className="text-sm text-purple-700 dark:text-purple-300">Progreso</div>
+            <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="text-2xl font-bold text-primary">{stats.completionRate}%</div>
+              <div className="text-sm text-primary/70">Progreso</div>
             </div>
           </div>
         </div>
@@ -717,52 +717,65 @@ export default function WeeklyPlanner() {
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">✏️</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Edición:</strong> Modifica título y categoría</span>
+                <span className="text-foreground"><strong>Edición:</strong> Modifica título y categoría</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">📊</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Estadísticas:</strong> Progreso en tiempo real</span>
+                <span className="text-accent font-bold">📊</span>
+                <span className="text-foreground"><strong>Estadísticas:</strong> Progreso en tiempo real</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">🌟</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Día actual:</strong> Destacado y prioritario</span>
+                <span className="text-accent font-bold">🌟</span>
+                <span className="text-foreground"><strong>Día actual:</strong> Destacado y prioritario</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">☁️</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Guardado:</strong> Automático en NeonDB</span>
+                <span className="text-accent font-bold">☁️</span>
+                <span className="text-foreground"><strong>Guardado:</strong> Automático en NeonDB</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Funcionalidades completadas */}
+          <div className="rounded-xl p-6 border bg-accent/5 border-accent/20">
+            <h3 className="text-lg font-semibold mb-3 text-accent">
+              ✅ Funcionalidades Completadas
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-accent font-bold">⏰</span>
+                <span className="text-foreground"><strong>Recordatorios:</strong> Sistema completo de notificaciones por email</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-accent font-bold">🎨</span>
+                <span className="text-foreground"><strong>Temas:</strong> Personalización completa de colores y modo oscuro/claro</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-accent font-bold">💾</span>
+                <span className="text-foreground"><strong>Persistencia:</strong> Configuraciones guardadas automáticamente</span>
               </div>
             </div>
           </div>
 
           {/* Próximas funcionalidades */}
-          <div className="rounded-xl p-6 border bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 dark:from-blue-900 dark:to-cyan-900 dark:border-blue-700">
-            <h3 className="text-lg font-semibold mb-3 text-blue-900 dark:text-blue-100">
+          <div className="rounded-xl p-6 border bg-primary/5 border-primary/20">
+            <h3 className="text-lg font-semibold mb-3 text-primary">
               🚀 Próximas Funcionalidades
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">⏰</span>
-                <span className="text-blue-800 dark:text-blue-200"><strong>Recordatorios:</strong> Notificaciones por hora</span>
+                <span className="text-primary font-bold">📱</span>
+                <span className="text-foreground"><strong>PWA:</strong> Instalación como app móvil</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">🎨</span>
-                <span className="text-blue-800 dark:text-blue-200"><strong>Temas:</strong> Personalización de colores</span>
+                <span className="text-primary font-bold">🔗</span>
+                <span className="text-foreground"><strong>Subtareas:</strong> Tareas anidadas</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">📱</span>
-                <span className="text-blue-800 dark:text-blue-200"><strong>PWA:</strong> Instalación como app móvil</span>
+                <span className="text-primary font-bold">📈</span>
+                <span className="text-foreground"><strong>Analytics:</strong> Reportes de productividad</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">🔗</span>
-                <span className="text-blue-800 dark:text-blue-200"><strong>Subtareas:</strong> Tareas anidadas</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">📈</span>
-                <span className="text-blue-800 dark:text-blue-200"><strong>Analytics:</strong> Reportes de productividad</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">🔄</span>
-                <span className="text-blue-800 dark:text-blue-200"><strong>Sincronización:</strong> Múltiples dispositivos</span>
+                <span className="text-primary font-bold">🔄</span>
+                <span className="text-foreground"><strong>Sincronización:</strong> Múltiples dispositivos</span>
               </div>
             </div>
           </div>

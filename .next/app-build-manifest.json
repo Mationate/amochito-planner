@@ -21,6 +21,11 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/tasks/stats/route.js"
     ],
+    "/api/user-preferences/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/user-preferences/route.js"
+    ],
     "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",

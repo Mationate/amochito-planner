@@ -39,6 +39,17 @@ model NotificationConfig {
   @@map("notification_configs")
 }
 
+model UserPreferences {
+  id          String   @id @default(cuid())
+  userId      String   @unique // Identificador único del usuario (puede ser email, session ID, etc.)
+  theme       String   @default("system") // 'light', 'dark', 'system'
+  colorTheme  String   @default("default") // 'default', 'blue', 'green', etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
 enum Priority {
   LOW
   MEDIUM

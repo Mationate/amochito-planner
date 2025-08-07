@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Menu, X, Calendar, CalendarDays, Bell } from 'lucide-react'
+import { Sun, Moon, Menu, X, Calendar, CalendarDays, Bell, Palette } from 'lucide-react'
 
 interface NavbarProps {
-  currentView: 'weekly' | 'monthly' | 'notifications'
-  onViewChange: (view: 'weekly' | 'monthly' | 'notifications') => void
+  currentView: 'weekly' | 'monthly' | 'notifications' | 'themes'
+  onViewChange: (view: 'weekly' | 'monthly' | 'notifications' | 'themes') => void
 }
 
 export default function Navbar({ currentView, onViewChange }: NavbarProps) {
@@ -41,21 +41,21 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
   }
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
+    <header className="bg-background shadow-sm border-b border-border transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 md:py-6">
           {/* Logo y título */}
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">WP</span>
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">WP</span>
               </div>
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground transition-colors duration-200">
                 Weekly Planner
               </h1>
-              <p className="hidden sm:block text-xs md:text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">
+              <p className="hidden sm:block text-xs md:text-sm text-muted-foreground transition-colors duration-200">
                 Organiza tu semana de manera eficiente
               </p>
             </div>
@@ -64,13 +64,13 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
           {/* Controles de escritorio */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Botones de vista */}
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div className="flex items-center bg-muted rounded-lg p-1">
               <button
                 onClick={() => onViewChange('weekly')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                   currentView === 'weekly'
-                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-background text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <CalendarDays className="w-4 h-4" />
@@ -80,8 +80,8 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
                 onClick={() => onViewChange('monthly')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                   currentView === 'monthly'
-                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-background text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Calendar className="w-4 h-4" />
@@ -91,24 +91,35 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
                 onClick={() => onViewChange('notifications')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                   currentView === 'notifications'
-                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-background text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Bell className="w-4 h-4" />
                 Alertas
               </button>
+              <button
+                onClick={() => onViewChange('themes')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  currentView === 'themes'
+                    ? 'bg-background text-accent shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Palette className="w-4 h-4" />
+                Temas
+              </button>
             </div>
             
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors duration-200"
               aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             >
               {isDarkMode ? (
-                <Sun className="w-5 h-5 text-yellow-500" />
+                <Sun className="w-5 h-5 text-accent" />
               ) : (
-                <Moon className="w-5 h-5 text-gray-600" />
+                <Moon className="w-5 h-5 text-muted-foreground" />
               )}
             </button>
           </div>
@@ -117,24 +128,24 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
           <div className="md:hidden flex items-center space-x-2">
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors duration-200"
               aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             >
               {isDarkMode ? (
-                <Sun className="w-5 h-5 text-yellow-500" />
+                <Sun className="w-5 h-5 text-accent" />
               ) : (
-                <Moon className="w-5 h-5 text-gray-600" />
+                <Moon className="w-5 h-5 text-muted-foreground" />
               )}
             </button>
             <button
               onClick={toggleMobileMenu}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors duration-200"
               aria-label="Abrir menú"
             >
               {isMobileMenuOpen ? (
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <X className="w-5 h-5 text-muted-foreground" />
               ) : (
-                <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <Menu className="w-5 h-5 text-muted-foreground" />
               )}
             </button>
           </div>
@@ -142,9 +153,9 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
 
         {/* Menú móvil */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
+          <div className="md:hidden border-t border-border py-4">
             <div className="flex flex-col space-y-3">
-              <div className="text-sm text-gray-500 dark:text-gray-400 px-2">
+              <div className="text-sm text-muted-foreground px-2">
                 Organiza tu semana de manera eficiente
               </div>
               
@@ -157,8 +168,8 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
                   }}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     currentView === 'weekly'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <CalendarDays className="w-4 h-4" />
@@ -171,8 +182,8 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
                   }}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     currentView === 'monthly'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
@@ -185,12 +196,26 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
                   }}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     currentView === 'notifications'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <Bell className="w-4 h-4" />
                   Configurar Alertas
+                </button>
+                <button
+                  onClick={() => {
+                    onViewChange('themes')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    currentView === 'themes'
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <Palette className="w-4 h-4" />
+                  Temas
                 </button>
               </div>
             </div>

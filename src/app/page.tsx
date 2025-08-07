@@ -4,10 +4,11 @@ import { useState } from 'react'
 import WeeklyPlanner from '@/components/WeeklyPlanner'
 import MonthlyView from '@/components/MonthlyView'
 import NotificationSettings from '@/components/NotificationSettings'
+import ThemeSettings from '@/components/ThemeSettings'
 import Navbar from '@/components/Navbar'
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'weekly' | 'monthly' | 'notifications'>('weekly')
+  const [currentView, setCurrentView] = useState<'weekly' | 'monthly' | 'notifications' | 'themes'>('weekly')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
@@ -18,8 +19,10 @@ export default function Home() {
             <WeeklyPlanner />
           ) : currentView === 'monthly' ? (
             <MonthlyView onBackToWeekly={() => setCurrentView('weekly')} />
-          ) : (
+          ) : currentView === 'notifications' ? (
             <NotificationSettings />
+          ) : (
+            <ThemeSettings />
           )}
         </div>
       </main>
