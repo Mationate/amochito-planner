@@ -1,9 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Menu, X } from 'lucide-react'
+import { Sun, Moon, Menu, X, Calendar, CalendarDays } from 'lucide-react'
 
-export default function Navbar() {
+interface NavbarProps {
+  currentView: 'weekly' | 'monthly'
+  onViewChange: (view: 'weekly' | 'monthly') => void
+}
+
+export default function Navbar({ currentView, onViewChange }: NavbarProps) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -58,6 +63,32 @@ export default function Navbar() {
 
           {/* Controles de escritorio */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Botones de vista */}
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+              <button
+                onClick={() => onViewChange('weekly')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  currentView === 'weekly'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <CalendarDays className="w-4 h-4" />
+                Semanal
+              </button>
+              <button
+                onClick={() => onViewChange('monthly')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  currentView === 'monthly'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                Mensual
+              </button>
+            </div>
+            
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -104,6 +135,38 @@ export default function Navbar() {
             <div className="flex flex-col space-y-3">
               <div className="text-sm text-gray-500 dark:text-gray-400 px-2">
                 Organiza tu semana de manera eficiente
+              </div>
+              
+              {/* Botones de vista móvil */}
+              <div className="flex flex-col space-y-2 px-2">
+                <button
+                  onClick={() => {
+                    onViewChange('weekly')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    currentView === 'weekly'
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  Vista Semanal
+                </button>
+                <button
+                  onClick={() => {
+                    onViewChange('monthly')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    currentView === 'monthly'
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4" />
+                  Vista Mensual
+                </button>
               </div>
             </div>
           </div>

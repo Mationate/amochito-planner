@@ -150,7 +150,36 @@ export const database = {
     }
   },
 
-  // Obtener estadísticas de tareas
+  // Obtener estadísticas de tareas},
+
+  // Obtener tareas por mes con filtro opcional de completadas
+  async getTasksByMonth(monthStart: string, monthEnd: string, completedOnly: boolean = false): Promise<Task[]> {
+    try {
+      const whereClause: any = {
+        date: {
+          gte: monthStart,
+          lte: monthEnd
+        }
+      };
+      
+      if (completedOnly) {
+        whereClause.completed = true;
+      }
+      
+      const tasks = await prisma.task.findMany({
+        where: whereClause,
+        orderBy: [
+          { date: 'asc' },
+          { createdAt: 'asc' }
+        ]
+      });
+      return tasks.map(mapPrismaTaskToTask);
+    } catch (error) {
+      console.error('Error fetching tasks by month:', error);
+      return [];
+    }
+  },
+
   async getTaskStats(tasks?: Task[]): Promise<{
     total: number;
     completed: number;

@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date');
     const weekStart = searchParams.get('weekStart');
     const weekEnd = searchParams.get('weekEnd');
+    const monthStart = searchParams.get('monthStart');
+    const monthEnd = searchParams.get('monthEnd');
+    const completed = searchParams.get('completed');
 
     if (date) {
       const tasks = await database.getTasksByDate(date);
@@ -15,6 +18,11 @@ export async function GET(request: NextRequest) {
 
     if (weekStart) {
       const tasks = await database.getTasksByWeek(weekStart);
+      return NextResponse.json(tasks);
+    }
+
+    if (monthStart && monthEnd) {
+      const tasks = await database.getTasksByMonth(monthStart, monthEnd, completed === 'true');
       return NextResponse.json(tasks);
     }
 
