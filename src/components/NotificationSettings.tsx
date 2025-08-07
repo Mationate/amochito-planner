@@ -37,11 +37,19 @@ export default function NotificationSettings() {
       const data: NotificationResponse = await response.json();
       
       if (data.success) {
-        setActiveJobs(data.activeJobs || 0);
-        setIsScheduled(data.activeJobs! > 0);
+        const jobCount = data.activeJobs || 0;
+        setActiveJobs(jobCount);
+        setIsScheduled(jobCount > 0);
+        console.log(`Notificaciones activas: ${jobCount}`);
+      } else {
+        console.error('Error en la respuesta:', data.error);
+        setActiveJobs(0);
+        setIsScheduled(false);
       }
     } catch (error) {
       console.error('Error cargando información de notificaciones:', error);
+      setActiveJobs(0);
+      setIsScheduled(false);
     }
   };
 
@@ -74,7 +82,7 @@ export default function NotificationSettings() {
       
       if (data.success) {
         showMessage('success', data.message || 'Notificación programada exitosamente');
-        setIsScheduled(true);
+        // Actualizar el estado inmediatamente y luego recargar
         await loadNotificationInfo();
       } else {
         showMessage('error', data.error || 'Error programando la notificación');
@@ -142,7 +150,7 @@ export default function NotificationSettings() {
       
       if (data.success) {
         showMessage('success', data.message || 'Notificación detenida');
-        setIsScheduled(false);
+        // Actualizar el estado después de detener
         await loadNotificationInfo();
       } else {
         showMessage('error', data.error || 'Error deteniendo la notificación');
@@ -165,7 +173,7 @@ export default function NotificationSettings() {
       
       if (data.success) {
         showMessage('success', data.message || 'Todas las notificaciones detenidas');
-        setIsScheduled(false);
+        // Actualizar el estado después de detener todas
         await loadNotificationInfo();
       } else {
         showMessage('error', data.error || 'Error deteniendo las notificaciones');
@@ -191,31 +199,66 @@ export default function NotificationSettings() {
         </p>
       </div>
 
-      {/* Estado actual */}
-      <Card className="border-2">
+      {/* Estado Actual */}
+      <Card className={`border-2 ${isScheduled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Estado Actual
+            Estado del Sistema
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {isScheduled ? (
-                <>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-green-600 font-medium">Notificaciones Activas</span>
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-5 w-5 text-gray-400" />
-                  <span className="text-gray-400">Sin Notificaciones</span>
-                </>
-              )}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isScheduled ? (
+                  <>
+                    <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
+                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <span className="text-green-700 font-semibold text-lg">Sistema Activo</span>
+                      <p className="text-green-600 text-sm">Las notificaciones están funcionando correctamente</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full">
+                      <XCircle className="h-6 w-6 text-gray-500" />
+                    </div>
+                    <div>
+                      <span className="text-gray-600 font-semibold text-lg">Sistema Inactivo</span>
+                      <p className="text-gray-500 text-sm">No hay notificaciones programadas</p>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="text-sm text-gray-500">
-              {activeJobs} notificación(es) programada(s)
+            
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Notificaciones Programadas:</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-2xl font-bold ${
+                    activeJobs > 0 ? 'text-green-600' : 'text-gray-400'
+                  }`}>
+                    {activeJobs}
+                  </span>
+                  <Bell className={`h-5 w-5 ${
+                    activeJobs > 0 ? 'text-green-600' : 'text-gray-400'
+                  }`} />
+                </div>
+              </div>
+              {activeJobs > 0 && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ Recibirás un correo diario con tus tareas pendientes
+                </p>
+              )}
+              {activeJobs === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Configura una notificación para recibir recordatorios diarios
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

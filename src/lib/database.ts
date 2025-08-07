@@ -20,6 +20,9 @@ const mapTaskToPrismaTask = (task: Partial<Task>) => {
   if (task.priority) {
     prismaTask.priority = task.priority.toUpperCase();
   }
+  if (task.category) {
+    prismaTask.category = task.category.toUpperCase();
+  }
   // Remover campos que no deben ser actualizados
   delete prismaTask.id;
   delete prismaTask.createdAt;
