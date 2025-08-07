@@ -116,6 +116,17 @@ export default function WeeklyPlanner() {
     }
   };
 
+  // Actualizar solo estadísticas
+  const updateStats = async () => {
+    try {
+      const weekStart = dateUtils.formatDate(currentWeek.weekStart);
+      const statsData = await api.getStats(weekStart);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error updating stats:', error);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [currentWeek]);
@@ -169,7 +180,7 @@ export default function WeeklyPlanner() {
       setNewTaskCategory('other');
       setAddingTaskToDay(null);
       showToast('Tarea creada exitosamente', 'success');
-      loadData(); // Recargar estadísticas
+      updateStats(); // Actualizar solo estadísticas
     } catch (error) {
       console.error('Error creating task:', error);
       showToast('Error al crear la tarea', 'error');
@@ -183,7 +194,7 @@ export default function WeeklyPlanner() {
         task.id === taskId ? updatedTask : task
       ));
       showToast('Tarea actualizada', 'success');
-      loadData(); // Recargar estadísticas
+      updateStats(); // Actualizar solo estadísticas
     } catch (error) {
       console.error('Error toggling task:', error);
       showToast('Error al actualizar la tarea', 'error');
@@ -195,7 +206,7 @@ export default function WeeklyPlanner() {
       await api.deleteTask(taskId);
       setTasks(prev => prev.filter(task => task.id !== taskId));
       showToast('Tarea eliminada', 'success');
-      loadData(); // Recargar estadísticas
+      updateStats(); // Actualizar solo estadísticas
     } catch (error) {
       console.error('Error deleting task:', error);
       showToast('Error al eliminar la tarea', 'error');
@@ -272,7 +283,7 @@ export default function WeeklyPlanner() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900">
+      <div className="w-screen flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Cargando tareas...</p>
