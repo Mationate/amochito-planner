@@ -439,10 +439,10 @@ export default function WeeklyPlanner() {
      return (
        <div
          ref={setNodeRef}
-         className={`rounded-xl shadow-sm p-6 min-h-[500px] transition-all hover:shadow-md cursor-pointer bg-white dark:bg-gray-800 ${
-           isToday ? 'ring-2 ring-blue-500' : ''
-         } ${
-           isToday ? 'bg-blue-50 dark:bg-blue-900' : ''
+         className={`rounded-xl shadow-sm p-6 min-h-[500px] transition-all hover:shadow-md cursor-pointer ${
+           isToday 
+             ? 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 ring-4 ring-blue-400 shadow-lg shadow-blue-200 dark:shadow-blue-800 border-2 border-blue-300 dark:border-blue-600' 
+             : 'bg-white dark:bg-gray-800'
          } ${
            addingTaskToDay === dayInfo.dayName ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900' : ''
          } ${
@@ -457,19 +457,27 @@ export default function WeeklyPlanner() {
          }}
        >
         <div className="text-center mb-6">
+           {isToday && (
+             <div className="mb-3">
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-bold animate-pulse">
+                 <div className="w-2 h-2 bg-white rounded-full"></div>
+                 HOY
+               </div>
+             </div>
+           )}
            {isDayLoading && (
              <div className="mb-3">
                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
                <p className="text-xs text-purple-600 mt-1">Moviendo tarea...</p>
              </div>
            )}
-           <div className={`text-3xl font-bold mb-2 ${
-             isToday ? 'text-blue-600' : 'text-gray-900 dark:text-white'
+           <div className={`text-4xl font-bold mb-2 ${
+             isToday ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white'
            }`}>
              {dayInfo.dayNumber}
            </div>
-          <div className={`text-lg font-semibold mb-1 ${
-            isToday ? 'text-blue-700' : 'text-gray-700 dark:text-gray-200'
+          <div className={`text-xl font-bold mb-1 ${
+            isToday ? 'text-blue-800 dark:text-blue-200' : 'text-gray-700 dark:text-gray-200'
           }`}>
             {dayInfo.dayName === 'monday' && 'Lunes'}
             {dayInfo.dayName === 'tuesday' && 'Martes'}
@@ -647,45 +655,114 @@ export default function WeeklyPlanner() {
           </div>
         </div>
 
-        {/* Planner semanal mejorado - Vista vertical */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {currentWeek.days.map(dayInfo => (
-            <DroppableDay key={dayInfo.dayName} dayInfo={dayInfo} />
-          ))}
-        </div>
+        {/* Día actual destacado */}
+        {(() => {
+          const today = currentWeek.days.find(dayInfo => 
+            dayInfo.date.toDateString() === new Date().toDateString()
+          );
+          const otherDays = currentWeek.days.filter(dayInfo => 
+            dayInfo.date.toDateString() !== new Date().toDateString()
+          );
+          
+          return (
+            <div className="space-y-8">
+              {/* Día de hoy - Grande y central */}
+              {today && (
+                <div className="flex justify-center">
+                  <div className="w-full max-w-2xl">
+                    <div className="text-center mb-4">
+                      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                        📅 Hoy - {today.date.toLocaleDateString('es-ES', { 
+                          weekday: 'long', 
+                          day: 'numeric', 
+                          month: 'long' 
+                        })}
+                      </h2>
+                    </div>
+                    <DroppableDay key={today.dayName} dayInfo={today} />
+                  </div>
+                </div>
+              )}
+              
+              {/* Otros días de la semana */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 text-center">
+                  📋 Otros días de la semana
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {otherDays.map((dayInfo) => (
+                    <DroppableDay key={dayInfo.dayName} dayInfo={dayInfo} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
-        {/* Información sobre funcionalidades */}
-        <div className="rounded-xl p-6 border bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-900 dark:to-emerald-900 dark:border-green-700">
-          <h3 className="text-lg font-semibold mb-3 text-green-900 dark:text-green-100">
-            ✨ Guía de Uso
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
+        {/* Funcionalidades actuales y próximas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Funcionalidades actuales */}
+          <div className="rounded-xl p-6 border bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-900 dark:to-emerald-900 dark:border-green-700">
+            <h3 className="text-lg font-semibold mb-3 text-green-900 dark:text-green-100">
+              ✅ Funcionalidades Disponibles
+            </h3>
+            <div className="space-y-2 text-sm">
               <div className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">🎯</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Crear tareas:</strong> Haz clic en cualquier día para agregar una tarea directamente</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Crear tareas:</strong> Clic en cualquier día</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-green-600 font-bold">🔄</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Drag & Drop:</strong> Arrastra tareas entre días</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">✏️</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Editar:</strong> Haz clic en el ícono de lápiz para modificar una tarea</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">🗑️</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Eliminar:</strong> Usa el ícono de papelera para borrar tareas</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">🔄</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Mover tareas:</strong> Arrastra y suelta entre días</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Edición:</strong> Modifica título y categoría</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">📊</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Estadísticas:</strong> Ve tu progreso semanal en tiempo real</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Estadísticas:</strong> Progreso en tiempo real</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-green-600 font-bold">🌟</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Día actual:</strong> Destacado y prioritario</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">☁️</span>
-                <span className="text-green-800 dark:text-green-200"><strong>Guardado:</strong> Automático en la nube (NeonDB)</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Guardado:</strong> Automático en NeonDB</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Próximas funcionalidades */}
+          <div className="rounded-xl p-6 border bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 dark:from-blue-900 dark:to-cyan-900 dark:border-blue-700">
+            <h3 className="text-lg font-semibold mb-3 text-blue-900 dark:text-blue-100">
+              🚀 Próximas Funcionalidades
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold">⏰</span>
+                <span className="text-blue-800 dark:text-blue-200"><strong>Recordatorios:</strong> Notificaciones por hora</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold">🎨</span>
+                <span className="text-blue-800 dark:text-blue-200"><strong>Temas:</strong> Personalización de colores</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold">📱</span>
+                <span className="text-blue-800 dark:text-blue-200"><strong>PWA:</strong> Instalación como app móvil</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold">🔗</span>
+                <span className="text-blue-800 dark:text-blue-200"><strong>Subtareas:</strong> Tareas anidadas</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold">📈</span>
+                <span className="text-blue-800 dark:text-blue-200"><strong>Analytics:</strong> Reportes de productividad</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold">🔄</span>
+                <span className="text-blue-800 dark:text-blue-200"><strong>Sincronización:</strong> Múltiples dispositivos</span>
               </div>
             </div>
           </div>
