@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Menu, X, Calendar, CalendarDays } from 'lucide-react'
+import { Sun, Moon, Menu, X, Calendar, CalendarDays, Bell } from 'lucide-react'
 
 interface NavbarProps {
-  currentView: 'weekly' | 'monthly'
-  onViewChange: (view: 'weekly' | 'monthly') => void
+  currentView: 'weekly' | 'monthly' | 'notifications'
+  onViewChange: (view: 'weekly' | 'monthly' | 'notifications') => void
 }
 
 export default function Navbar({ currentView, onViewChange }: NavbarProps) {
@@ -87,6 +87,17 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
                 <Calendar className="w-4 h-4" />
                 Mensual
               </button>
+              <button
+                onClick={() => onViewChange('notifications')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  currentView === 'notifications'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Bell className="w-4 h-4" />
+                Alertas
+              </button>
             </div>
             
             <button
@@ -166,6 +177,20 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
                 >
                   <Calendar className="w-4 h-4" />
                   Vista Mensual
+                </button>
+                <button
+                  onClick={() => {
+                    onViewChange('notifications')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    currentView === 'notifications'
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <Bell className="w-4 h-4" />
+                  Configurar Alertas
                 </button>
               </div>
             </div>

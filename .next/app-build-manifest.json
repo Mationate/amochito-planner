@@ -21,10 +21,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/tasks/stats/route.js"
     ],
-    "/api/tasks/toggle/route": [
+    "/api/notifications/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/tasks/toggle/route.js"
+      "static/chunks/app/api/notifications/route.js"
     ],
     "/_not-found/page": [
       "static/chunks/webpack.js",
