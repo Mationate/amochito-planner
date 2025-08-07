@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Task, WeekDay, WeekInfo, Category, CATEGORIES } from '@/types';
-import { dateUtils } from '@/lib/storage';
+import { dateUtils } from '@/lib/dateUtils';
 // API helper functions
 const api = {
   async getTasks(weekStart?: string): Promise<Task[]> {

@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
 import { Task, WeekDay, Priority, Category } from '@/types';
-import { dateUtils } from './storage';
+import { dateUtils } from './dateUtils';
 
 // Mapeo de tipos entre Prisma y nuestra aplicación
 const mapPrismaTaskToTask = (prismaTask: any): Task => ({
