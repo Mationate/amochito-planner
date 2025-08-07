@@ -8,7 +8,31 @@ class CronService {
   private static instance: CronService;
   private jobs: Map<string, cron.ScheduledTask> = new Map();
 
-  private constructor() {}
+  private constructor() {
+    // Recuperar configuraciones de notificaciones al inicializar
+    this.loadNotificationConfigs();
+  }
+
+  // Cargar configuraciones de notificaciones desde la base de datos
+  private async loadNotificationConfigs(): Promise<void> {
+    try {
+      const configs = await database.getAllActiveNotificationConfigs();
+      console.log(`📋 Cargando ${configs.length} configuraciones de notificación desde la base de datos`);
+      
+      for (const config of configs) {
+        const { hour, minute } = parseTimeString(config.time) || { hour: 8, minute: 0 };
+        const jobId = await this.scheduleDailyEmail(config.email, hour, minute);
+        
+        // Iniciar el job si está activo
+        if (config.isActive) {
+          this.startJob(jobId);
+          console.log(`▶️ Notificación reactivada para ${config.email} a las ${config.time}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error cargando configuraciones de notificación:', error);
+    }
+  }
 
   public static getInstance(): CronService {
     if (!CronService.instance) {
@@ -18,8 +42,9 @@ class CronService {
   }
 
   // Programar envío diario de correos
-  public scheduleDailyEmail(recipientEmail: string, hour: number = 8, minute: number = 0): string {
+  public async scheduleDailyEmail(recipientEmail: string, hour: number = 8, minute: number = 0): Promise<string> {
     const jobId = `daily-email-${recipientEmail.replace('@', '-at-').replace('.', '-dot-')}`;
+    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
     
     // Si ya existe un job para este email, lo detenemos primero
     if (this.jobs.has(jobId)) {
@@ -59,6 +84,28 @@ class CronService {
     task.stop();
 
     this.jobs.set(jobId, task);
+    
+    // Guardar o actualizar la configuración en la base de datos
+    try {
+      const existingConfig = await database.getNotificationConfig(recipientEmail);
+      
+      if (existingConfig) {
+        // Actualizar configuración existente
+        await database.updateNotificationConfig(recipientEmail, {
+          time: timeString,
+          jobId: jobId,
+          isActive: true
+        });
+        console.log(`🔄 Configuración de notificación actualizada para ${recipientEmail}`);
+      } else {
+        // Crear nueva configuración
+        await database.createNotificationConfig(recipientEmail, timeString, jobId);
+        console.log(`✅ Nueva configuración de notificación creada para ${recipientEmail}`);
+      }
+    } catch (error) {
+      console.error('Error guardando configuración de notificación:', error);
+    }
+    
     console.log(`📅 Cron job programado: ${jobId} para las ${hour}:${minute.toString().padStart(2, '0')} diariamente`);
     
     return jobId;
@@ -77,10 +124,23 @@ class CronService {
   }
 
   // Detener un job específico
-  public stopJob(jobId: string): boolean {
+  public async stopJob(jobId: string): Promise<boolean> {
     const job = this.jobs.get(jobId);
     if (job) {
       job.stop();
+      
+      // Desactivar en la base de datos
+      try {
+        const configs = await database.getAllActiveNotificationConfigs();
+        const config = configs.find(c => c.jobId === jobId);
+        if (config) {
+          await database.deactivateNotificationConfig(config.email);
+          console.log(`🔄 Configuración desactivada para ${config.email}`);
+        }
+      } catch (error) {
+        console.error('Error desactivando configuración en la base de datos:', error);
+      }
+      
       console.log(`⏹️ Cron job detenido: ${jobId}`);
       return true;
     }
@@ -89,11 +149,24 @@ class CronService {
   }
 
   // Eliminar un job
-  public removeJob(jobId: string): boolean {
+  public async removeJob(jobId: string): Promise<boolean> {
     const job = this.jobs.get(jobId);
     if (job) {
       job.destroy();
       this.jobs.delete(jobId);
+      
+      // Eliminar de la base de datos
+      try {
+        const configs = await database.getAllActiveNotificationConfigs();
+        const config = configs.find(c => c.jobId === jobId);
+        if (config) {
+          await database.deleteNotificationConfig(config.email);
+          console.log(`🗑️ Configuración eliminada de la base de datos para ${config.email}`);
+        }
+      } catch (error) {
+        console.error('Error eliminando configuración de la base de datos:', error);
+      }
+      
       console.log(`🗑️ Cron job eliminado: ${jobId}`);
       return true;
     }
@@ -101,12 +174,47 @@ class CronService {
     return false;
   }
 
+  // Detener notificación por email específico
+  public async stopNotificationByEmail(email: string): Promise<boolean> {
+    try {
+      const config = await database.getNotificationConfig(email);
+      if (config && config.jobId) {
+        const success = await this.stopJob(config.jobId);
+        if (success) {
+          console.log(`🔄 Notificación detenida para ${email}`);
+        }
+        return success;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error deteniendo notificación por email:', error);
+      return false;
+    }
+  }
+
   // Obtener todos los jobs activos
-  public getActiveJobs(): string[] {
-    return Array.from(this.jobs.keys()).filter(jobId => {
-      const job = this.jobs.get(jobId);
-      return job && job.getStatus() === 'scheduled';
-    });
+  public async getActiveJobs(): Promise<string[]> {
+    try {
+      const configs = await database.getAllActiveNotificationConfigs();
+      return configs.map(config => config.jobId || `daily-email-${config.email.replace('@', '-at-').replace('.', '-dot-')}`);
+    } catch (error) {
+      console.error('Error obteniendo trabajos activos desde la base de datos:', error);
+      // Fallback a la implementación en memoria
+      return Array.from(this.jobs.keys()).filter(jobId => {
+        const job = this.jobs.get(jobId);
+        return job && job.getStatus() === 'scheduled';
+      });
+    }
+  }
+
+  public async getActiveJobsCount(): Promise<number> {
+    try {
+      const configs = await database.getAllActiveNotificationConfigs();
+      return configs.length;
+    } catch (error) {
+      console.error('Error obteniendo conteo de trabajos activos:', error);
+      return 0;
+    }
   }
 
   // Obtener información de un job
@@ -154,12 +262,29 @@ class CronService {
   }
 
   // Detener todos los jobs
-  public stopAllJobs(): void {
-    this.jobs.forEach((job, jobId) => {
-      job.stop();
-      console.log(`⏹️ Cron job detenido: ${jobId}`);
-    });
-    console.log('⏹️ Todos los cron jobs han sido detenidos');
+  public async stopAllJobs(): Promise<void> {
+    try {
+      // Desactivar todas las configuraciones en la base de datos
+      const configs = await database.getAllActiveNotificationConfigs();
+      for (const config of configs) {
+        await database.deactivateNotificationConfig(config.email);
+      }
+      
+      // Detener todos los jobs en memoria
+      this.jobs.forEach((job, jobId) => {
+        job.stop();
+        console.log(`⏹️ Cron job detenido: ${jobId}`);
+      });
+      
+      console.log('🛑 Todos los cron jobs han sido detenidos y desactivados en la base de datos');
+    } catch (error) {
+      console.error('Error deteniendo todos los jobs:', error);
+      // Fallback: detener solo los jobs en memoria
+      this.jobs.forEach((job, jobId) => {
+        job.stop();
+        console.log(`⏹️ Cron job detenido: ${jobId}`);
+      });
+    }
   }
 
   // Iniciar todos los jobs

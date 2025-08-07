@@ -27,6 +27,18 @@ model Task {
   @@map("tasks")
 }
 
+model NotificationConfig {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  time        String   // HH:MM format
+  isActive    Boolean  @default(true)
+  jobId       String?  // ID del trabajo cron
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("notification_configs")
+}
+
 enum Priority {
   LOW
   MEDIUM

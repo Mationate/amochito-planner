@@ -18,6 +18,14 @@ interface NotificationResponse {
   jobs?: string[];
 }
 
+interface NotificationConfig {
+  email: string;
+  time: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function NotificationSettings() {
   const [email, setEmail] = useState('');
   const [time, setTime] = useState('08:00');
@@ -25,11 +33,21 @@ export default function NotificationSettings() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [activeJobs, setActiveJobs] = useState<number>(0);
   const [isScheduled, setIsScheduled] = useState(false);
+  const [userConfig, setUserConfig] = useState<NotificationConfig | null>(null);
 
   // Cargar información de notificaciones activas al montar el componente
   useEffect(() => {
     loadNotificationInfo();
   }, []);
+
+  // Cargar configuración del usuario cuando cambie el email
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadUserConfig(email);
+    }, 500); // Debounce para evitar muchas llamadas
+
+    return () => clearTimeout(timeoutId);
+  }, [email]);
 
   const loadNotificationInfo = async () => {
     try {
@@ -50,6 +68,28 @@ export default function NotificationSettings() {
       console.error('Error cargando información de notificaciones:', error);
       setActiveJobs(0);
       setIsScheduled(false);
+    }
+  };
+
+  const loadUserConfig = async (userEmail: string) => {
+    if (!userEmail.trim()) {
+      setUserConfig(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/notifications/config?email=${encodeURIComponent(userEmail)}`);
+      const data = await response.json();
+      
+      if (data.success && data.config) {
+        setUserConfig(data.config);
+        setTime(data.config.time); // Actualizar el campo de tiempo con la configuración guardada
+      } else {
+        setUserConfig(null);
+      }
+    } catch (error) {
+      console.error('Error cargando configuración del usuario:', error);
+      setUserConfig(null);
     }
   };
 
@@ -249,9 +289,42 @@ export default function NotificationSettings() {
                   }`} />
                 </div>
               </div>
-              {activeJobs > 0 && (
+              
+              {/* Información específica del usuario */}
+              {userConfig && userConfig.isActive && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">Tu Configuración Activa</span>
+                  </div>
+                  <div className="text-xs text-green-600 space-y-1">
+                    <p>📧 Email: {userConfig.email}</p>
+                    <p>⏰ Hora: {userConfig.time}</p>
+                    <p>📅 Configurado: {new Date(userConfig.createdAt).toLocaleDateString('es-ES')}</p>
+                    {userConfig.updatedAt !== userConfig.createdAt && (
+                      <p>🔄 Última actualización: {new Date(userConfig.updatedAt).toLocaleDateString('es-ES')}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {userConfig && !userConfig.isActive && (
+                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <XCircle className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm font-medium text-yellow-700">Configuración Inactiva</span>
+                  </div>
+                  <div className="text-xs text-yellow-600 space-y-1">
+                    <p>📧 Email: {userConfig.email}</p>
+                    <p>⏰ Hora configurada: {userConfig.time}</p>
+                    <p>⚠️ Esta configuración está desactivada</p>
+                  </div>
+                </div>
+              )}
+              
+              {activeJobs > 0 && !userConfig && (
                 <p className="text-xs text-green-600 mt-1">
-                  ✓ Recibirás un correo diario con tus tareas pendientes
+                  ✓ Hay notificaciones activas en el sistema
                 </p>
               )}
               {activeJobs === 0 && (

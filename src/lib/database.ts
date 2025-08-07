@@ -206,5 +206,85 @@ export const database = {
       pending,
       completionRate
     };
+  },
+
+  // Funciones para manejar configuraciones de notificaciones
+  async createNotificationConfig(email: string, time: string, jobId?: string) {
+    try {
+      const config = await prisma.notificationConfig.create({
+        data: {
+          email,
+          time,
+          jobId,
+          isActive: true
+        }
+      });
+      return config;
+    } catch (error) {
+      console.error('Error creando configuración de notificación:', error);
+      return null;
+    }
+  },
+
+  async updateNotificationConfig(email: string, updates: { time?: string; jobId?: string; isActive?: boolean }) {
+    try {
+      const config = await prisma.notificationConfig.update({
+        where: { email },
+        data: updates
+      });
+      return config;
+    } catch (error) {
+      console.error('Error actualizando configuración de notificación:', error);
+      return null;
+    }
+  },
+
+  async getNotificationConfig(email: string) {
+    try {
+      const config = await prisma.notificationConfig.findUnique({
+        where: { email }
+      });
+      return config;
+    } catch (error) {
+      console.error('Error obteniendo configuración de notificación:', error);
+      return null;
+    }
+  },
+
+  async getAllActiveNotificationConfigs() {
+    try {
+      const configs = await prisma.notificationConfig.findMany({
+        where: { isActive: true }
+      });
+      return configs;
+    } catch (error) {
+      console.error('Error obteniendo configuraciones activas:', error);
+      return [];
+    }
+  },
+
+  async deleteNotificationConfig(email: string) {
+    try {
+      await prisma.notificationConfig.delete({
+        where: { email }
+      });
+      return true;
+    } catch (error) {
+      console.error('Error eliminando configuración de notificación:', error);
+      return false;
+    }
+  },
+
+  async deactivateNotificationConfig(email: string) {
+    try {
+      const config = await prisma.notificationConfig.update({
+        where: { email },
+        data: { isActive: false }
+      });
+      return config;
+    } catch (error) {
+      console.error('Error desactivando configuración de notificación:', error);
+      return null;
+    }
   }
 };

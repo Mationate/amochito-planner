@@ -5,11 +5,12 @@ import { verifyEmailConfig } from '@/lib/emailService';
 // GET - Obtener información de notificaciones activas
 export async function GET(request: NextRequest) {
   try {
-    const activeJobs = cronService.getActiveJobs();
+    const activeJobs = await cronService.getActiveJobs();
+    const activeJobsCount = await cronService.getActiveJobsCount();
     
     return NextResponse.json({
       success: true,
-      activeJobs: activeJobs.length,
+      activeJobs: activeJobsCount,
       jobs: activeJobs
     });
   } catch (error) {
@@ -79,8 +80,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Programar el cron job
-        const jobId = cronService.scheduleDailyEmail(email, hour, minute);
-        const started = cronService.startJob(jobId);
+        const jobId = await cronService.scheduleDailyEmail(email, hour, minute);
+        const started = await cronService.startJob(jobId);
 
         if (started) {
           return NextResponse.json({
@@ -124,8 +125,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'stop': {
-        const jobId = `daily-email-${email.replace('@', '-at-').replace('.', '-dot-')}`;
-        const stopped = cronService.stopJob(jobId);
+        const stopped = await cronService.stopNotificationByEmail(email);
         
         if (stopped) {
           return NextResponse.json({
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
 
       case 'remove': {
         const jobId = `daily-email-${email.replace('@', '-at-').replace('.', '-dot-')}`;
-        const removed = cronService.removeJob(jobId);
+        const removed = await cronService.removeJob(jobId);
         
         if (removed) {
           return NextResponse.json({
