@@ -67,6 +67,8 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  useDraggable,
+  useDroppable,
 } from '@dnd-kit/core';
 
 export default function WeeklyPlanner() {
@@ -80,6 +82,7 @@ export default function WeeklyPlanner() {
   const [editCategory, setEditCategory] = useState<Category>('other');
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dayLoading, setDayLoading] = useState<WeekDay | null>(null);
   const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0, completionRate: 0 });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; visible: boolean }>({ message: '', type: 'info', visible: false });
 
@@ -261,6 +264,7 @@ export default function WeeklyPlanner() {
     if (!dayInfo) return;
 
     try {
+      setDayLoading(newDay);
       const updatedTask = await api.updateTask(taskId, {
         day: newDay,
         date: dateUtils.formatDate(dayInfo.date)
@@ -269,16 +273,290 @@ export default function WeeklyPlanner() {
       setTasks(prev => prev.map(t => 
         t.id === taskId ? updatedTask : t
       ));
-      showToast(`Tarea movida a ${newDay}`, 'success');
+      
+      const dayNames = {
+        monday: 'Lunes',
+        tuesday: 'Martes',
+        wednesday: 'Miércoles',
+        thursday: 'Jueves',
+        friday: 'Viernes',
+        saturday: 'Sábado',
+        sunday: 'Domingo'
+      };
+      
+      showToast(`Tarea movida a ${dayNames[newDay]}`, 'success');
+      updateStats();
     } catch (error) {
       console.error('Error moving task:', error);
       showToast('Error al mover la tarea', 'error');
+    } finally {
+      setDayLoading(null);
     }
   };
 
   // Función auxiliar para obtener tareas por fecha
   const getTasksByDate = (date: string): Task[] => {
     return tasks.filter(task => task.date === date);
+  };
+
+  // Componente para tareas draggables
+  const DraggableTask = ({ task }: { task: Task }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      isDragging,
+    } = useDraggable({
+      id: task.id,
+    });
+
+    const style = transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    } : undefined;
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        className={`p-4 rounded-lg border-2 transition-all cursor-move hover:shadow-md ${
+          task.completed 
+            ? 'bg-green-50 border-green-200 opacity-75 dark:bg-green-900 dark:border-green-700'
+            : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500'
+        } ${isDragging ? 'opacity-50' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {editingTask === task.id ? (
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleEditTask(task.id, editTitle);
+                }
+              }}
+              autoFocus
+            />
+            <select
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value as Category)}
+              className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+            >
+              {CATEGORIES.map(category => (
+                <option key={category.key} value={category.key}>
+                  {category.emoji} {category.label}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleEditTask(task.id, editTitle)}
+                variant="ghost"
+                size="icon"
+                className="text-green-600 hover:bg-green-100 dark:hover:bg-green-800"
+              >
+                <Check size={16} />
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingTask(null);
+                  setEditTitle('');
+                  setEditCategory('other');
+                }}
+                variant="ghost"
+                size="icon"
+                className="text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              >
+                <X size={16} />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1">
+              <button
+                onClick={() => handleToggleTask(task.id)}
+                className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                  task.completed
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : 'border-gray-300 hover:border-green-400 dark:border-gray-500 dark:hover:border-green-400'
+                }`}
+              >
+                {task.completed && <Check size={14} />}
+              </button>
+              <span
+                className={`text-sm flex-1 leading-relaxed ${
+                  task.completed 
+                    ? 'line-through text-gray-500 dark:text-gray-400'
+                    : 'text-gray-900 dark:text-gray-100'
+                }`}
+              >
+                <span className="mr-2">{getCategoryEmoji(task.category)}</span>
+                {task.title}
+              </span>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                onClick={() => startEditing(task)}
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900 h-8 w-8"
+              >
+                <Edit2 size={14} />
+              </Button>
+              <Button
+                onClick={() => handleDeleteTask(task.id)}
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900 h-8 w-8"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Componente para días droppables
+   const DroppableDay = ({ dayInfo }: { dayInfo: any }) => {
+     const { isOver, setNodeRef } = useDroppable({
+       id: dayInfo.dayName,
+     });
+
+     const dayTasks = getTasksByDate(dateUtils.formatDate(dayInfo.date));
+     const completedTasks = dayTasks.filter(task => task.completed).length;
+     const isToday = dateUtils.isSameWeek(dayInfo.date, new Date()) && 
+                    dayInfo.date.toDateString() === new Date().toDateString();
+     const isDayLoading = dayLoading === dayInfo.dayName;
+
+     return (
+       <div
+         ref={setNodeRef}
+         className={`rounded-xl shadow-sm p-6 min-h-[500px] transition-all hover:shadow-md cursor-pointer bg-white dark:bg-gray-800 ${
+           isToday ? 'ring-2 ring-blue-500' : ''
+         } ${
+           isToday ? 'bg-blue-50 dark:bg-blue-900' : ''
+         } ${
+           addingTaskToDay === dayInfo.dayName ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900' : ''
+         } ${
+           isOver ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900' : ''
+         } ${
+           isDayLoading ? 'opacity-75' : ''
+         }`}
+         onClick={() => {
+           if (!addingTaskToDay && !isDayLoading) {
+             startAddingTaskToDay(dayInfo.dayName);
+           }
+         }}
+       >
+        <div className="text-center mb-6">
+           {isDayLoading && (
+             <div className="mb-3">
+               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
+               <p className="text-xs text-purple-600 mt-1">Moviendo tarea...</p>
+             </div>
+           )}
+           <div className={`text-3xl font-bold mb-2 ${
+             isToday ? 'text-blue-600' : 'text-gray-900 dark:text-white'
+           }`}>
+             {dayInfo.dayNumber}
+           </div>
+          <div className={`text-lg font-semibold mb-1 ${
+            isToday ? 'text-blue-700' : 'text-gray-700 dark:text-gray-200'
+          }`}>
+            {dayInfo.dayName === 'monday' && 'Lunes'}
+            {dayInfo.dayName === 'tuesday' && 'Martes'}
+            {dayInfo.dayName === 'wednesday' && 'Miércoles'}
+            {dayInfo.dayName === 'thursday' && 'Jueves'}
+            {dayInfo.dayName === 'friday' && 'Viernes'}
+            {dayInfo.dayName === 'saturday' && 'Sábado'}
+            {dayInfo.dayName === 'sunday' && 'Domingo'}
+          </div>
+          <div className="text-sm capitalize mb-3 text-gray-500 dark:text-gray-400">
+            {dayInfo.monthName}
+          </div>
+          <div className={`text-sm font-medium px-3 py-1 rounded-full inline-block ${
+            completedTasks === dayTasks.length && dayTasks.length > 0
+              ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200'
+              : dayTasks.length > 0
+              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
+              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+          }`}>
+            {completedTasks}/{dayTasks.length} tareas
+          </div>
+        </div>
+        
+        <div className="space-y-3">
+          {addingTaskToDay === dayInfo.dayName && (
+            <div className="p-4 rounded-lg border-2 border-dashed border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder="Título de la tarea"
+                  className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddTaskToDay(dayInfo.dayName);
+                    }
+                  }}
+                  autoFocus
+                />
+                <select
+                  value={newTaskCategory}
+                  onChange={(e) => setNewTaskCategory(e.target.value as Category)}
+                  className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                >
+                  {CATEGORIES.map(category => (
+                    <option key={category.key} value={category.key}>
+                      {category.emoji} {category.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleAddTaskToDay(dayInfo.dayName)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Guardar
+                  </Button>
+                  <Button
+                    onClick={cancelAddingTask}
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {dayTasks.length === 0 && addingTaskToDay !== dayInfo.dayName ? (
+            <div className="text-center py-8 text-gray-400 dark:text-gray-500">
+              <div className="text-sm mb-1">
+                Sin tareas programadas
+              </div>
+              <div className="text-blue-500 text-xs font-medium">
+                Haz clic aquí para agregar una tarea
+              </div>
+            </div>
+          ) : (
+            dayTasks.map(task => (
+              <DraggableTask key={task.id} task={task} />
+            ))
+          )}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -371,230 +649,9 @@ export default function WeeklyPlanner() {
 
         {/* Planner semanal mejorado - Vista vertical */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {currentWeek.days.map(dayInfo => {
-            const dayTasks = getTasksByDate(dateUtils.formatDate(dayInfo.date));
-            const completedTasks = dayTasks.filter(task => task.completed).length;
-            const isToday = dateUtils.formatDate(new Date()) === dateUtils.formatDate(dayInfo.date);
-            
-            return (
-              <div
-                key={dayInfo.dayName}
-                id={dayInfo.dayName}
-                className={`rounded-xl shadow-sm p-6 min-h-[500px] transition-all hover:shadow-md cursor-pointer bg-white dark:bg-gray-800 ${
-                  isToday ? 'ring-2 ring-blue-500' : ''
-                } ${
-                  isToday ? 'bg-blue-50 dark:bg-blue-900' : ''
-                } ${
-                  addingTaskToDay === dayInfo.dayName ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900' : ''
-                }`}
-                onClick={() => {
-                  if (!addingTaskToDay) {
-                    startAddingTaskToDay(dayInfo.dayName);
-                  }
-                }}
-              >
-                <div className="text-center mb-6">
-                  <div className={`text-3xl font-bold mb-2 ${
-                    isToday ? 'text-blue-600' : 'text-gray-900 dark:text-white'
-                  }`}>
-                    {dayInfo.dayNumber}
-                  </div>
-                  <div className={`text-lg font-semibold mb-1 ${
-                    isToday ? 'text-blue-700' : 'text-gray-700 dark:text-gray-200'
-                  }`}>
-                    {dayInfo.dayName === 'monday' && 'Lunes'}
-                    {dayInfo.dayName === 'tuesday' && 'Martes'}
-                    {dayInfo.dayName === 'wednesday' && 'Miércoles'}
-                    {dayInfo.dayName === 'thursday' && 'Jueves'}
-                    {dayInfo.dayName === 'friday' && 'Viernes'}
-                    {dayInfo.dayName === 'saturday' && 'Sábado'}
-                    {dayInfo.dayName === 'sunday' && 'Domingo'}
-                  </div>
-                  <div className="text-sm capitalize mb-3 text-gray-500 dark:text-gray-400">
-                    {dayInfo.monthName}
-                  </div>
-                  <div className={`text-sm font-medium px-3 py-1 rounded-full inline-block ${
-                    completedTasks === dayTasks.length && dayTasks.length > 0
-                      ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200'
-                      : dayTasks.length > 0
-                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                  }`}>
-                    {completedTasks}/{dayTasks.length} tareas
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  {addingTaskToDay === dayInfo.dayName && (
-                    <div className="p-4 rounded-lg border-2 border-dashed border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20" onClick={(e) => e.stopPropagation()}>
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={newTaskTitle}
-                          onChange={(e) => setNewTaskTitle(e.target.value)}
-                          placeholder="Escribe tu nueva tarea..."
-                          className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleAddTaskToDay(dayInfo.dayName);
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <select
-                          value={newTaskCategory}
-                          onChange={(e) => setNewTaskCategory(e.target.value as Category)}
-                          className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                        >
-                          {CATEGORIES.map(category => (
-                            <option key={category.key} value={category.key}>
-                              {category.emoji} {category.label}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleAddTaskToDay(dayInfo.dayName)}
-                            className="bg-green-600 hover:bg-green-700"
-                            size="sm"
-                          >
-                            <Check size={14} />
-                            Guardar
-                          </Button>
-                          <Button
-                            onClick={cancelAddingTask}
-                            variant="secondary"
-                            size="sm"
-                          >
-                            <X size={14} />
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {dayTasks.length === 0 && addingTaskToDay !== dayInfo.dayName ? (
-                    <div className="text-center py-8">
-                      <div className="text-sm italic mb-2 text-gray-400 dark:text-gray-500">
-                        Sin tareas programadas
-                      </div>
-                      <div className="text-blue-500 text-xs font-medium">
-                        Haz clic aquí para agregar una tarea
-                      </div>
-                    </div>
-                  ) : (
-                    dayTasks.map(task => (
-                      <div
-                        key={task.id}
-                        id={task.id}
-                        draggable
-                        className={`p-4 rounded-lg border-2 transition-all cursor-move hover:shadow-md ${
-                          task.completed 
-                            ? 'bg-green-50 border-green-200 opacity-75 dark:bg-green-900 dark:border-green-700'
-                            : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500'
-                        }`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {editingTask === task.id ? (
-                          <div className="space-y-3">
-                            <input
-                              type="text"
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleEditTask(task.id, editTitle);
-                                }
-                              }}
-                              autoFocus
-                            />
-                            <select
-                              value={editCategory}
-                              onChange={(e) => setEditCategory(e.target.value as Category)}
-                              className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                            >
-                              {CATEGORIES.map(category => (
-                                <option key={category.key} value={category.key}>
-                                  {category.emoji} {category.label}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleEditTask(task.id, editTitle)}
-                                variant="ghost"
-                                size="icon"
-                                className="text-green-600 hover:bg-green-100 dark:hover:bg-green-800"
-                              >
-                                <Check size={16} />
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setEditingTask(null);
-                                  setEditTitle('');
-                                  setEditCategory('other');
-                                }}
-                                variant="ghost"
-                                size="icon"
-                                className="text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-                              >
-                                <X size={16} />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-start gap-3 flex-1">
-                              <button
-                                onClick={() => handleToggleTask(task.id)}
-                                className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                                  task.completed
-                                    ? 'bg-green-500 border-green-500 text-white'
-                                    : 'border-gray-300 hover:border-green-400 dark:border-gray-500 dark:hover:border-green-400'
-                                }`}
-                              >
-                                {task.completed && <Check size={14} />}
-                              </button>
-                              <span
-                                className={`text-sm flex-1 leading-relaxed ${
-                                  task.completed 
-                                    ? 'line-through text-gray-500 dark:text-gray-400'
-                                    : 'text-gray-900 dark:text-gray-100'
-                                }`}
-                              >
-                                <span className="mr-2">{getCategoryEmoji(task.category)}</span>
-                                {task.title}
-                              </span>
-                            </div>
-                            <div className="flex gap-1">
-                              <Button
-                                onClick={() => startEditing(task)}
-                                variant="ghost"
-                                size="icon"
-                                className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900 h-8 w-8"
-                              >
-                                <Edit2 size={14} />
-                              </Button>
-                              <Button
-                                onClick={() => handleDeleteTask(task.id)}
-                                variant="ghost"
-                                size="icon"
-                                className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900 h-8 w-8"
-                              >
-                                <Trash2 size={14} />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {currentWeek.days.map(dayInfo => (
+            <DroppableDay key={dayInfo.dayName} dayInfo={dayInfo} />
+          ))}
         </div>
 
         {/* Información sobre funcionalidades */}
@@ -641,18 +698,18 @@ export default function WeeklyPlanner() {
             Guardado automáticamente en la nube
           </div>
         </div>
-      </div>
+        </div>
 
-      <DragOverlay>
-        {activeTask ? (
-          <div className="p-4 bg-white dark:bg-gray-700 rounded-lg border-2 border-blue-300 shadow-lg opacity-90">
-            <div className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-500" />
-              <span className="text-sm text-gray-900 dark:text-gray-100">{activeTask.title}</span>
+        <DragOverlay>
+          {activeTask ? (
+            <div className="p-4 bg-white dark:bg-gray-700 rounded-lg border-2 border-blue-300 shadow-lg opacity-90">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-500" />
+                <span className="text-sm text-gray-900 dark:text-gray-100">{activeTask.title}</span>
+              </div>
             </div>
-          </div>
-        ) : null}
-      </DragOverlay>
+          ) : null}
+        </DragOverlay>
       </DndContext>
 
       {/* Toast Notification */}
