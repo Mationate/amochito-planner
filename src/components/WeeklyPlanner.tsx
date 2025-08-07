@@ -56,7 +56,7 @@ const api = {
     return response.json();
   }
 };
-import { Plus, Check, X, Edit2, Trash2, ChevronLeft, ChevronRight, Calendar, Moon, Sun } from 'lucide-react';
+import { Plus, Check, X, Edit2, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import {
   DndContext,
   DragEndEvent,
@@ -82,8 +82,6 @@ export default function WeeklyPlanner() {
   const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0, completionRate: 0 });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; visible: boolean }>({ message: '', type: 'info', visible: false });
 
-
-
   // Función helper para obtener el emoji de la categoría
   const getCategoryEmoji = (category: Category) => {
     const categoryData = CATEGORIES.find(cat => cat.key === category);
@@ -98,7 +96,29 @@ export default function WeeklyPlanner() {
     })
   );
 
-  // Función para mostrar toast
+  // Cargar tareas y estadísticas
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const weekStart = dateUtils.formatDate(currentWeek.weekStart);
+      const [tasksData, statsData] = await Promise.all([
+        api.getTasks(weekStart),
+        api.getStats(weekStart)
+      ]);
+      setTasks(tasksData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      showToast('Error al cargar los datos', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [currentWeek]);
+
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type, visible: true });
     setTimeout(() => {
@@ -106,85 +126,18 @@ export default function WeeklyPlanner() {
     }, 3000);
   };
 
-  // Función para actualizar una tarea específica en el estado
-  const updateTaskInState = (updatedTask: Task) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === updatedTask.id ? updatedTask : task
-      )
-    );
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentWeek.weekStart);
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+    setCurrentWeek(dateUtils.getWeekInfo(newDate));
   };
 
-  // Función para agregar una tarea al estado
-  const addTaskToState = (newTask: Task) => {
-    setTasks(prevTasks => [...prevTasks, newTask]);
+  const goToCurrentWeek = () => {
+    setCurrentWeek(dateUtils.getWeekInfo(new Date()));
   };
 
-  // Función para eliminar una tarea del estado
-  const removeTaskFromState = (taskId: string) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-  };
-
-  // Función para actualizar estadísticas
-  const updateStats = async () => {
-    try {
-      const weekStats = await api.getStats(dateUtils.formatDate(currentWeek.weekStart));
-      setStats(weekStats);
-    } catch (error) {
-      console.error('Error updating stats:', error);
-    }
-  };
-
-  // Cargar tareas de la semana actual
-  const loadWeekTasks = async () => {
-    setLoading(true);
-    try {
-      const weekTasks = await api.getTasks(dateUtils.formatDate(currentWeek.weekStart));
-      setTasks(weekTasks);
-      const weekStats = await api.getStats(dateUtils.formatDate(currentWeek.weekStart));
-      setStats(weekStats);
-    } catch (error) {
-      console.error('Error loading tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Cargar tareas cuando cambie la semana
-  useEffect(() => {
-    loadWeekTasks();
-  }, [currentWeek]);
-
-  const handleAddTaskToDay = async (dayName: WeekDay) => {
-    if (newTaskTitle.trim()) {
-      try {
-        const selectedDate = currentWeek.days.find(day => day.dayName === dayName);
-        if (selectedDate) {
-          const newTask = await api.createTask(
-            newTaskTitle.trim(), 
-            dayName,
-            dateUtils.formatDate(selectedDate.date),
-            'medium',
-            newTaskCategory
-          );
-          if (newTask) {
-            addTaskToState(newTask); // Agregar tarea al estado local
-            await updateStats(); // Actualizar estadísticas
-            setNewTaskTitle('');
-            setNewTaskCategory('other');
-            setAddingTaskToDay(null);
-            showToast('Tarea creada exitosamente', 'success');
-          }
-        }
-      } catch (error) {
-        console.error('Error creating task:', error);
-        showToast('Error al crear la tarea', 'error');
-      }
-    }
-  };
-
-  const startAddingTaskToDay = (dayName: WeekDay) => {
-    setAddingTaskToDay(dayName);
+  const startAddingTaskToDay = (day: WeekDay) => {
+    setAddingTaskToDay(day);
     setNewTaskTitle('');
     setNewTaskCategory('other');
   };
@@ -195,13 +148,41 @@ export default function WeeklyPlanner() {
     setNewTaskCategory('other');
   };
 
+  const handleAddTaskToDay = async (day: WeekDay) => {
+    if (!newTaskTitle.trim()) return;
+
+    try {
+      const dayInfo = currentWeek.days.find(d => d.dayName === day);
+      if (!dayInfo) return;
+
+      const newTask = await api.createTask(
+        newTaskTitle.trim(),
+        day,
+        dateUtils.formatDate(dayInfo.date),
+        'medium',
+        newTaskCategory
+      );
+
+      setTasks(prev => [...prev, newTask]);
+      setNewTaskTitle('');
+      setNewTaskCategory('other');
+      setAddingTaskToDay(null);
+      showToast('Tarea creada exitosamente', 'success');
+      loadData(); // Recargar estadísticas
+    } catch (error) {
+      console.error('Error creating task:', error);
+      showToast('Error al crear la tarea', 'error');
+    }
+  };
+
   const handleToggleTask = async (taskId: string) => {
     try {
       const updatedTask = await api.toggleTask(taskId);
-      if (updatedTask) {
-        updateTaskInState(updatedTask); // Actualizar tarea en estado local
-        await updateStats(); // Actualizar estadísticas
-      }
+      setTasks(prev => prev.map(task => 
+        task.id === taskId ? updatedTask : task
+      ));
+      showToast('Tarea actualizada', 'success');
+      loadData(); // Recargar estadísticas
     } catch (error) {
       console.error('Error toggling task:', error);
       showToast('Error al actualizar la tarea', 'error');
@@ -211,31 +192,13 @@ export default function WeeklyPlanner() {
   const handleDeleteTask = async (taskId: string) => {
     try {
       await api.deleteTask(taskId);
-      removeTaskFromState(taskId); // Eliminar tarea del estado local
-      await updateStats(); // Actualizar estadísticas
-      showToast('Tarea eliminada exitosamente', 'success');
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+      showToast('Tarea eliminada', 'success');
+      loadData(); // Recargar estadísticas
     } catch (error) {
       console.error('Error deleting task:', error);
       showToast('Error al eliminar la tarea', 'error');
     }
-  };
-
-  const handleEditTask = async (taskId: string, newTitle: string) => {
-    if (newTitle.trim()) {
-      try {
-        const updatedTask = await api.updateTask(taskId, { title: newTitle.trim(), category: editCategory });
-        if (updatedTask) {
-          updateTaskInState(updatedTask); // Actualizar tarea en estado local
-          showToast('Tarea editada exitosamente', 'success');
-        }
-      } catch (error) {
-        console.error('Error editing task:', error);
-        showToast('Error al editar la tarea', 'error');
-      }
-    }
-    setEditingTask(null);
-    setEditTitle('');
-    setEditCategory('other');
   };
 
   const startEditing = (task: Task) => {
@@ -244,14 +207,25 @@ export default function WeeklyPlanner() {
     setEditCategory(task.category);
   };
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    const weeksToAdd = direction === 'next' ? 1 : -1;
-    const newDate = dateUtils.addWeeks(currentWeek.weekStart, weeksToAdd);
-    setCurrentWeek(dateUtils.getWeekInfo(newDate));
-  };
+  const handleEditTask = async (taskId: string, newTitle: string) => {
+    if (!newTitle.trim()) return;
 
-  const goToCurrentWeek = () => {
-    setCurrentWeek(dateUtils.getWeekInfo(new Date()));
+    try {
+      const updatedTask = await api.updateTask(taskId, { 
+        title: newTitle.trim(),
+        category: editCategory
+      });
+      setTasks(prev => prev.map(task => 
+        task.id === taskId ? updatedTask : task
+      ));
+      setEditingTask(null);
+      setEditTitle('');
+      setEditCategory('other');
+      showToast('Tarea actualizada', 'success');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      showToast('Error al actualizar la tarea', 'error');
+    }
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -263,27 +237,27 @@ export default function WeeklyPlanner() {
     const { active, over } = event;
     setActiveTask(null);
 
-    if (!over) return;
+    if (!over || active.id === over.id) return;
 
     const taskId = active.id as string;
-    const newDayName = over.id as WeekDay;
+    const newDay = over.id as WeekDay;
     
-    // Encontrar la nueva fecha basada en el día
-    const newDayInfo = currentWeek.days.find(day => day.dayName === newDayName);
-    if (!newDayInfo) return;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || task.day === newDay) return;
 
-    const newDate = dateUtils.formatDate(newDayInfo.date);
-    
+    const dayInfo = currentWeek.days.find(d => d.dayName === newDay);
+    if (!dayInfo) return;
+
     try {
-      const updatedTask = await api.updateTask(taskId, { 
-        day: newDayName, 
-        date: newDate 
+      const updatedTask = await api.updateTask(taskId, {
+        day: newDay,
+        date: dateUtils.formatDate(dayInfo.date)
       });
       
-      if (updatedTask) {
-        updateTaskInState(updatedTask); // Actualizar tarea en estado local
-        showToast('Tarea movida exitosamente', 'success');
-      }
+      setTasks(prev => prev.map(t => 
+        t.id === taskId ? updatedTask : t
+      ));
+      showToast(`Tarea movida a ${newDay}`, 'success');
     } catch (error) {
       console.error('Error moving task:', error);
       showToast('Error al mover la tarea', 'error');
@@ -315,8 +289,6 @@ export default function WeeklyPlanner() {
         onDragEnd={handleDragEnd}
       >
         <div className="space-y-6 p-4">
-
-
           {/* Navegación de semanas */}
           <div className="rounded-xl shadow-sm p-6 transition-colors duration-300 bg-white dark:bg-gray-800">
           <div className="flex items-center justify-between mb-4">
@@ -366,34 +338,20 @@ export default function WeeklyPlanner() {
               <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
               <div className="text-sm text-blue-700 dark:text-blue-300">Total</div>
             </div>
-            <div className={`text-center p-4 rounded-lg ${
-              darkMode ? 'bg-green-900' : 'bg-green-50'
-            }`}>
+            <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900">
               <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-              <div className={`text-sm ${
-                darkMode ? 'text-green-300' : 'text-green-700'
-              }`}>Completadas</div>
+              <div className="text-sm text-green-700 dark:text-green-300">Completadas</div>
             </div>
-            <div className={`text-center p-4 rounded-lg ${
-              darkMode ? 'bg-orange-900' : 'bg-orange-50'
-            }`}>
+            <div className="text-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900">
               <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-              <div className={`text-sm ${
-                darkMode ? 'text-orange-300' : 'text-orange-700'
-              }`}>Pendientes</div>
+              <div className="text-sm text-orange-700 dark:text-orange-300">Pendientes</div>
             </div>
-            <div className={`text-center p-4 rounded-lg ${
-              darkMode ? 'bg-purple-900' : 'bg-purple-50'
-            }`}>
+            <div className="text-center p-4 rounded-lg bg-purple-50 dark:bg-purple-900">
               <div className="text-2xl font-bold text-purple-600">{stats.completionRate}%</div>
-              <div className={`text-sm ${
-                darkMode ? 'text-purple-300' : 'text-purple-700'
-              }`}>Progreso</div>
+              <div className="text-sm text-purple-700 dark:text-purple-300">Progreso</div>
             </div>
           </div>
         </div>
-
-
 
         {/* Planner semanal mejorado - Vista vertical */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -406,14 +364,12 @@ export default function WeeklyPlanner() {
               <div
                 key={dayInfo.dayName}
                 id={dayInfo.dayName}
-                className={`rounded-xl shadow-sm p-6 min-h-[500px] transition-all hover:shadow-md cursor-pointer ${
-                  darkMode ? 'bg-gray-800' : 'bg-white'
-                } ${
+                className={`rounded-xl shadow-sm p-6 min-h-[500px] transition-all hover:shadow-md cursor-pointer bg-white dark:bg-gray-800 ${
                   isToday ? 'ring-2 ring-blue-500' : ''
                 } ${
-                  isToday && darkMode ? 'bg-blue-900' : isToday ? 'bg-blue-50' : ''
+                  isToday ? 'bg-blue-50 dark:bg-blue-900' : ''
                 } ${
-                  addingTaskToDay === dayInfo.dayName && darkMode ? 'ring-2 ring-green-500 bg-green-900' : addingTaskToDay === dayInfo.dayName ? 'ring-2 ring-green-500 bg-green-50' : ''
+                  addingTaskToDay === dayInfo.dayName ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900' : ''
                 }`}
                 onClick={() => {
                   if (!addingTaskToDay) {
@@ -423,12 +379,12 @@ export default function WeeklyPlanner() {
               >
                 <div className="text-center mb-6">
                   <div className={`text-3xl font-bold mb-2 ${
-                    isToday ? 'text-blue-600' : darkMode ? 'text-white' : 'text-gray-900'
+                    isToday ? 'text-blue-600' : 'text-gray-900 dark:text-white'
                   }`}>
                     {dayInfo.dayNumber}
                   </div>
                   <div className={`text-lg font-semibold mb-1 ${
-                    isToday ? 'text-blue-700' : darkMode ? 'text-gray-200' : 'text-gray-700'
+                    isToday ? 'text-blue-700' : 'text-gray-700 dark:text-gray-200'
                   }`}>
                     {dayInfo.dayName === 'monday' && 'Lunes'}
                     {dayInfo.dayName === 'tuesday' && 'Martes'}
@@ -438,46 +394,33 @@ export default function WeeklyPlanner() {
                     {dayInfo.dayName === 'saturday' && 'Sábado'}
                     {dayInfo.dayName === 'sunday' && 'Domingo'}
                   </div>
-                  <div className={`text-sm capitalize mb-3 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
+                  <div className="text-sm capitalize mb-3 text-gray-500 dark:text-gray-400">
                     {dayInfo.monthName}
                   </div>
                   <div className={`text-sm font-medium px-3 py-1 rounded-full inline-block ${
                     completedTasks === dayTasks.length && dayTasks.length > 0
-                      ? 'bg-green-100 text-green-800'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200'
                       : dayTasks.length > 0
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                   }`}>
                     {completedTasks}/{dayTasks.length} tareas
                   </div>
                 </div>
                 
-                <div className="space-y-3 max-h-80 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
-                  {/* Formulario para agregar tarea en este día */}
+                <div className="space-y-3">
                   {addingTaskToDay === dayInfo.dayName && (
-                    <div className={`border-2 rounded-lg p-4 mb-4 ${
-                      darkMode 
-                        ? 'bg-green-900 border-green-700' 
-                        : 'bg-green-50 border-green-200'
-                    }`} onClick={(e) => e.stopPropagation()}>
+                    <div className="p-4 rounded-lg border-2 border-dashed border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20" onClick={(e) => e.stopPropagation()}>
                       <div className="space-y-3">
                         <input
                           type="text"
                           value={newTaskTitle}
                           onChange={(e) => setNewTaskTitle(e.target.value)}
-                          placeholder="Título de la tarea..."
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-300' 
-                              : 'bg-white border-green-300 text-gray-900 placeholder-gray-500'
-                          }`}
+                          placeholder="Escribe tu nueva tarea..."
+                          className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               handleAddTaskToDay(dayInfo.dayName);
-                            } else if (e.key === 'Escape') {
-                              cancelAddingTask();
                             }
                           }}
                           autoFocus
@@ -485,11 +428,7 @@ export default function WeeklyPlanner() {
                         <select
                           value={newTaskCategory}
                           onChange={(e) => setNewTaskCategory(e.target.value as Category)}
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-green-300 text-gray-900'
-                          }`}
+                          className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         >
                           {CATEGORIES.map(category => (
                             <option key={category.key} value={category.key}>
@@ -507,11 +446,7 @@ export default function WeeklyPlanner() {
                           </button>
                           <button
                             onClick={cancelAddingTask}
-                            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${
-                              darkMode 
-                                ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' 
-                                : 'bg-gray-500 text-white hover:bg-gray-600'
-                            }`}
+                            className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
                           >
                             <X size={14} />
                             Cancelar
@@ -523,9 +458,7 @@ export default function WeeklyPlanner() {
                   
                   {dayTasks.length === 0 && addingTaskToDay !== dayInfo.dayName ? (
                     <div className="text-center py-8">
-                      <div className={`text-sm italic mb-2 ${
-                        darkMode ? 'text-gray-500' : 'text-gray-400'
-                      }`}>
+                      <div className="text-sm italic mb-2 text-gray-400 dark:text-gray-500">
                         Sin tareas programadas
                       </div>
                       <div className="text-blue-500 text-xs font-medium">
@@ -540,8 +473,8 @@ export default function WeeklyPlanner() {
                         draggable
                         className={`p-4 rounded-lg border-2 transition-all cursor-move hover:shadow-md ${
                           task.completed 
-                            ? darkMode ? 'bg-green-900 border-green-700 opacity-75' : 'bg-green-50 border-green-200 opacity-75'
-                            : darkMode ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : 'bg-white border-gray-200 hover:border-gray-300'
+                            ? 'bg-green-50 border-green-200 opacity-75 dark:bg-green-900 dark:border-green-700'
+                            : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500'
                         }`}
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -551,11 +484,7 @@ export default function WeeklyPlanner() {
                               type="text"
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
-                              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                darkMode 
-                                  ? 'bg-gray-700 border-gray-600 text-white' 
-                                  : 'bg-white border-gray-300 text-gray-900'
-                              }`}
+                              className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
                                   handleEditTask(task.id, editTitle);
@@ -566,11 +495,7 @@ export default function WeeklyPlanner() {
                             <select
                               value={editCategory}
                               onChange={(e) => setEditCategory(e.target.value as Category)}
-                              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                darkMode 
-                                  ? 'bg-gray-700 border-gray-600 text-white' 
-                                  : 'bg-white border-gray-300 text-gray-900'
-                              }`}
+                              className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                             >
                               {CATEGORIES.map(category => (
                                 <option key={category.key} value={category.key}>
@@ -581,9 +506,7 @@ export default function WeeklyPlanner() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleEditTask(task.id, editTitle)}
-                                className={`p-2 text-green-600 rounded-lg transition-colors ${
-                                  darkMode ? 'hover:bg-green-800' : 'hover:bg-green-100'
-                                }`}
+                                className="p-2 text-green-600 rounded-lg transition-colors hover:bg-green-100 dark:hover:bg-green-800"
                               >
                                 <Check size={16} />
                               </button>
@@ -593,11 +516,7 @@ export default function WeeklyPlanner() {
                                   setEditTitle('');
                                   setEditCategory('other');
                                 }}
-                                className={`p-2 rounded-lg transition-colors ${
-                                  darkMode 
-                                    ? 'text-gray-400 hover:bg-gray-700' 
-                                    : 'text-gray-500 hover:bg-gray-100'
-                                }`}
+                                className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
                               >
                                 <X size={16} />
                               </button>
@@ -611,7 +530,7 @@ export default function WeeklyPlanner() {
                                 className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                                   task.completed
                                     ? 'bg-green-500 border-green-500 text-white'
-                                    : 'border-gray-300 hover:border-green-400'
+                                    : 'border-gray-300 hover:border-green-400 dark:border-gray-500 dark:hover:border-green-400'
                                 }`}
                               >
                                 {task.completed && <Check size={14} />}
@@ -619,8 +538,8 @@ export default function WeeklyPlanner() {
                               <span
                                 className={`text-sm flex-1 leading-relaxed ${
                                   task.completed 
-                                    ? darkMode ? 'line-through text-gray-400' : 'line-through text-gray-500'
-                                    : darkMode ? 'text-gray-100' : 'text-gray-900'
+                                    ? 'line-through text-gray-500 dark:text-gray-400'
+                                    : 'text-gray-900 dark:text-gray-100'
                                 }`}
                               >
                                 <span className="mr-2">{getCategoryEmoji(task.category)}</span>
@@ -630,21 +549,13 @@ export default function WeeklyPlanner() {
                             <div className="flex gap-1">
                               <button
                                 onClick={() => startEditing(task)}
-                                className={`p-2 rounded-lg transition-colors ${
-                                  darkMode 
-                                    ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-900' 
-                                    : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
-                                }`}
+                                className="p-2 rounded-lg transition-colors text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900"
                               >
                                 <Edit2 size={14} />
                               </button>
                               <button
                                 onClick={() => handleDeleteTask(task.id)}
-                                className={`p-2 rounded-lg transition-colors ${
-                                  darkMode 
-                                    ? 'text-gray-400 hover:text-red-400 hover:bg-red-900' 
-                                    : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                                }`}
+                                className="p-2 rounded-lg transition-colors text-gray-400 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -661,43 +572,37 @@ export default function WeeklyPlanner() {
         </div>
 
         {/* Información sobre funcionalidades */}
-        <div className={`rounded-xl p-6 border ${
-          darkMode 
-            ? 'bg-gradient-to-r from-green-900 to-emerald-900 border-green-700' 
-            : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-        }`}>
-          <h3 className={`text-lg font-semibold mb-3 ${
-            darkMode ? 'text-green-100' : 'text-green-900'
-          }`}>
+        <div className="rounded-xl p-6 border bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-900 dark:to-emerald-900 dark:border-green-700">
+          <h3 className="text-lg font-semibold mb-3 text-green-900 dark:text-green-100">
             ✨ Guía de Uso
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="space-y-2">
               <div className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">🎯</span>
-                <span className={darkMode ? 'text-green-200' : 'text-green-800'}><strong>Crear tareas:</strong> Haz clic en cualquier día para agregar una tarea directamente</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Crear tareas:</strong> Haz clic en cualquier día para agregar una tarea directamente</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">🔄</span>
-                <span className={darkMode ? 'text-green-200' : 'text-green-800'}><strong>Reorganizar:</strong> Arrastra y suelta tareas entre días</span>
+                <span className="text-green-600 font-bold">✏️</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Editar:</strong> Haz clic en el ícono de lápiz para modificar una tarea</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">📅</span>
-                <span className={darkMode ? 'text-green-200' : 'text-green-800'}><strong>Navegar:</strong> Usa las flechas o "Semana Actual"</span>
+                <span className="text-green-600 font-bold">🗑️</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Eliminar:</strong> Usa el ícono de papelera para borrar tareas</span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">✅</span>
-                <span className={darkMode ? 'text-green-200' : 'text-green-800'}><strong>Completar:</strong> Haz clic en el círculo junto a la tarea</span>
+                <span className="text-green-600 font-bold">🔄</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Mover tareas:</strong> Arrastra y suelta entre días</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">📊</span>
-                <span className={darkMode ? 'text-green-200' : 'text-green-800'}><strong>Estadísticas:</strong> Solo de la semana actual</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Estadísticas:</strong> Ve tu progreso semanal en tiempo real</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">💾</span>
-                <span className={darkMode ? 'text-green-200' : 'text-green-800'}><strong>Guardado:</strong> Automático en la nube (NeonDB)</span>
+                <span className="text-green-600 font-bold">☁️</span>
+                <span className="text-green-800 dark:text-green-200"><strong>Guardado:</strong> Automático en la nube (NeonDB)</span>
               </div>
             </div>
           </div>
@@ -705,11 +610,7 @@ export default function WeeklyPlanner() {
 
         {/* Estado de guardado */}
         <div className="text-center py-4">
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-            darkMode 
-              ? 'bg-green-900 text-green-200' 
-              : 'bg-green-100 text-green-800'
-          }`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             Guardado automáticamente en la nube
           </div>
@@ -718,14 +619,15 @@ export default function WeeklyPlanner() {
 
       <DragOverlay>
         {activeTask ? (
-          <div className="p-4 bg-white rounded-lg border-2 border-blue-300 shadow-lg opacity-90">
+          <div className="p-4 bg-white dark:bg-gray-700 rounded-lg border-2 border-blue-300 shadow-lg opacity-90">
             <div className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded border-2 border-gray-300" />
-              <span className="text-sm text-gray-900">{activeTask.title}</span>
+              <div className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-500" />
+              <span className="text-sm text-gray-900 dark:text-gray-100">{activeTask.title}</span>
             </div>
           </div>
         ) : null}
       </DragOverlay>
+      </DndContext>
 
       {/* Toast Notification */}
       {toast.visible && (
@@ -735,13 +637,10 @@ export default function WeeklyPlanner() {
           'bg-blue-500 text-white'
         }`}>
           <div className="flex items-center gap-2">
-            {toast.type === 'success' && <Check size={20} />}
-            {toast.type === 'error' && <X size={20} />}
-            <span className="font-medium">{toast.message}</span>
+            <span>{toast.message}</span>
           </div>
         </div>
       )}
-      </DndContext>
     </div>
   );
 }
