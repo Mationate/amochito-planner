@@ -8,7 +8,9 @@ const api = {
   async getTasks(weekStart?: string): Promise<Task[]> {
     const url = weekStart ? `/api/tasks?weekStart=${weekStart}` : '/api/tasks';
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch tasks');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}`);
+    }
     return response.json();
   },
 
@@ -52,7 +54,9 @@ const api = {
   async getStats(weekStart?: string): Promise<{ total: number; completed: number; pending: number; completionRate: number }> {
     const url = weekStart ? `/api/tasks/stats?weekStart=${weekStart}` : '/api/tasks/stats';
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch stats');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch stats: ${response.status} ${response.statusText}`);
+    }
     return response.json();
   }
 };

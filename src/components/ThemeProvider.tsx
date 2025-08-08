@@ -46,8 +46,11 @@ export function ThemeProvider({
     const loadUserPreferences = async () => {
       try {
         const response = await fetch(`/api/user-preferences?userId=${userId}`);
-        if (response.ok) {
-          const preferences = await response.json();
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const preferences = await response.json();
+        if (preferences) {
           setTheme(preferences.theme as Theme);
           setColorTheme(preferences.colorTheme as ColorTheme);
         }
