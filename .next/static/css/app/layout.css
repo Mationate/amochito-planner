@@ -744,6 +744,7 @@ video {
     --accent: 239 84% 67%;
     --accent-foreground: 0 0% 9%;
   }
+
   * {
   border-color: hsl(var(--border));
 }
@@ -1862,142 +1863,6 @@ video {
 
 
 
-.group:hover .group-hover\:opacity-100 {
-  opacity: 1;
-}
-
-
-
-.peer:disabled ~ .peer-disabled\:cursor-not-allowed {
-  cursor: not-allowed;
-}
-
-
-
-.peer:disabled ~ .peer-disabled\:opacity-70 {
-  opacity: 0.7;
-}
-
-
-
-.data-\[disabled\]\:pointer-events-none[data-disabled] {
-  pointer-events: none;
-}
-
-
-
-.data-\[side\=bottom\]\:translate-y-1[data-side="bottom"] {
-  --tw-translate-y: 0.25rem;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-
-
-.data-\[side\=left\]\:-translate-x-1[data-side="left"] {
-  --tw-translate-x: -0.25rem;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-
-
-.data-\[side\=right\]\:translate-x-1[data-side="right"] {
-  --tw-translate-x: 0.25rem;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-
-
-.data-\[side\=top\]\:-translate-y-1[data-side="top"] {
-  --tw-translate-y: -0.25rem;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-
-
-.data-\[placeholder\]\:text-muted-foreground[data-placeholder] {
-  color: hsl(var(--muted-foreground));
-}
-
-
-
-.data-\[disabled\]\:opacity-50[data-disabled] {
-  opacity: 0.5;
-}
-
-
-
-.data-\[state\=open\]\:animate-in[data-state="open"] {
-  animation-name: enter;
-  animation-duration: 150ms;
-  --tw-enter-opacity: initial;
-  --tw-enter-scale: initial;
-  --tw-enter-rotate: initial;
-  --tw-enter-translate-x: initial;
-  --tw-enter-translate-y: initial;
-}
-
-
-
-.data-\[state\=closed\]\:animate-out[data-state="closed"] {
-  animation-name: exit;
-  animation-duration: 150ms;
-  --tw-exit-opacity: initial;
-  --tw-exit-scale: initial;
-  --tw-exit-rotate: initial;
-  --tw-exit-translate-x: initial;
-  --tw-exit-translate-y: initial;
-}
-
-
-
-.data-\[state\=closed\]\:fade-out-0[data-state="closed"] {
-  --tw-exit-opacity: 0;
-}
-
-
-
-.data-\[state\=open\]\:fade-in-0[data-state="open"] {
-  --tw-enter-opacity: 0;
-}
-
-
-
-.data-\[state\=closed\]\:zoom-out-95[data-state="closed"] {
-  --tw-exit-scale: .95;
-}
-
-
-
-.data-\[state\=open\]\:zoom-in-95[data-state="open"] {
-  --tw-enter-scale: .95;
-}
-
-
-
-.data-\[side\=bottom\]\:slide-in-from-top-2[data-side="bottom"] {
-  --tw-enter-translate-y: -0.5rem;
-}
-
-
-
-.data-\[side\=left\]\:slide-in-from-right-2[data-side="left"] {
-  --tw-enter-translate-x: 0.5rem;
-}
-
-
-
-.data-\[side\=right\]\:slide-in-from-left-2[data-side="right"] {
-  --tw-enter-translate-x: -0.5rem;
-}
-
-
-
-.data-\[side\=top\]\:slide-in-from-bottom-2[data-side="top"] {
-  --tw-enter-translate-y: 0.5rem;
-}
-
-
-
 .hover\:scale-105:hover {
   --tw-scale-x: 1.05;
   --tw-scale-y: 1.05;
@@ -2271,6 +2136,142 @@ video {
 
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
+}
+
+
+
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+}
+
+
+
+.peer:disabled ~ .peer-disabled\:cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+
+
+.peer:disabled ~ .peer-disabled\:opacity-70 {
+  opacity: 0.7;
+}
+
+
+
+.data-\[disabled\]\:pointer-events-none[data-disabled] {
+  pointer-events: none;
+}
+
+
+
+.data-\[side\=bottom\]\:translate-y-1[data-side="bottom"] {
+  --tw-translate-y: 0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+
+
+.data-\[side\=left\]\:-translate-x-1[data-side="left"] {
+  --tw-translate-x: -0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+
+
+.data-\[side\=right\]\:translate-x-1[data-side="right"] {
+  --tw-translate-x: 0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+
+
+.data-\[side\=top\]\:-translate-y-1[data-side="top"] {
+  --tw-translate-y: -0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+
+
+.data-\[placeholder\]\:text-muted-foreground[data-placeholder] {
+  color: hsl(var(--muted-foreground));
+}
+
+
+
+.data-\[disabled\]\:opacity-50[data-disabled] {
+  opacity: 0.5;
+}
+
+
+
+.data-\[state\=open\]\:animate-in[data-state="open"] {
+  animation-name: enter;
+  animation-duration: 150ms;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-rotate: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+}
+
+
+
+.data-\[state\=closed\]\:animate-out[data-state="closed"] {
+  animation-name: exit;
+  animation-duration: 150ms;
+  --tw-exit-opacity: initial;
+  --tw-exit-scale: initial;
+  --tw-exit-rotate: initial;
+  --tw-exit-translate-x: initial;
+  --tw-exit-translate-y: initial;
+}
+
+
+
+.data-\[state\=closed\]\:fade-out-0[data-state="closed"] {
+  --tw-exit-opacity: 0;
+}
+
+
+
+.data-\[state\=open\]\:fade-in-0[data-state="open"] {
+  --tw-enter-opacity: 0;
+}
+
+
+
+.data-\[state\=closed\]\:zoom-out-95[data-state="closed"] {
+  --tw-exit-scale: .95;
+}
+
+
+
+.data-\[state\=open\]\:zoom-in-95[data-state="open"] {
+  --tw-enter-scale: .95;
+}
+
+
+
+.data-\[side\=bottom\]\:slide-in-from-top-2[data-side="bottom"] {
+  --tw-enter-translate-y: -0.5rem;
+}
+
+
+
+.data-\[side\=left\]\:slide-in-from-right-2[data-side="left"] {
+  --tw-enter-translate-x: 0.5rem;
+}
+
+
+
+.data-\[side\=right\]\:slide-in-from-left-2[data-side="right"] {
+  --tw-enter-translate-x: -0.5rem;
+}
+
+
+
+.data-\[side\=top\]\:slide-in-from-bottom-2[data-side="top"] {
+  --tw-enter-translate-y: 0.5rem;
 }
 
 
