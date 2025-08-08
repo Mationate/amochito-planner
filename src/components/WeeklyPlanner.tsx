@@ -295,8 +295,20 @@ export default function WeeklyPlanner() {
   };
 
   // Función auxiliar para obtener tareas por fecha
-  const getTasksByDate = (date: string): Task[] => {
-    return tasks.filter(task => task.date === date);
+  const getTasksByDate = (date: string, dayName?: WeekDay): Task[] => {
+    return tasks.filter(task => {
+      // Normalizar fechas para comparación exacta
+      const taskDate = task.date.trim();
+      const searchDate = date.trim();
+      const dateMatches = taskDate === searchDate;
+      
+      // Si se proporciona dayName, también verificar que coincida
+      if (dayName) {
+        return dateMatches && task.day === dayName;
+      }
+      
+      return dateMatches;
+    });
   };
 
   // Componente para tareas draggables
@@ -430,7 +442,8 @@ export default function WeeklyPlanner() {
        id: dayInfo.dayName,
      });
 
-     const dayTasks = getTasksByDate(dateUtils.formatDate(dayInfo.date));
+     const formattedDate = dateUtils.formatDate(dayInfo.date);
+     const dayTasks = getTasksByDate(formattedDate, dayInfo.dayName);
      const completedTasks = dayTasks.filter(task => task.completed).length;
      const isToday = dateUtils.isSameWeek(dayInfo.date, new Date()) && 
                     dayInfo.date.toDateString() === new Date().toDateString();

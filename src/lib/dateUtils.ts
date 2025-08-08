@@ -11,7 +11,9 @@ export const dateUtils = {
     const d = new Date(date);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para que lunes sea el primer día
-    return new Date(d.setDate(diff));
+    const result = new Date(d);
+    result.setDate(diff);
+    return result;
   },
 
   // Agregar días a una fecha
