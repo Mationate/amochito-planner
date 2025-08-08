@@ -1,10 +1,7 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/notifications/route": "app/api/notifications/route.js",
-  "/api/tasks/toggle/route": "app/api/tasks/toggle/route.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/api/tasks/route": "app/api/tasks/route.js",
   "/api/tasks/stats/route": "app/api/tasks/stats/route.js",
+  "/api/tasks/route": "app/api/tasks/route.js",
   "/api/user-preferences/route": "app/api/user-preferences/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js"
 }

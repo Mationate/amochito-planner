@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Task, WeekDay, WeekInfo, Category, CATEGORIES } from '@/types';
+import { Task, WeekDay, WeekInfo, Category, Priority, CATEGORIES, PRIORITIES } from '@/types';
 import { dateUtils } from '@/lib/dateUtils';
 // API helper functions
 const api = {
@@ -81,9 +81,11 @@ export default function WeeklyPlanner() {
   const [addingTaskToDay, setAddingTaskToDay] = useState<WeekDay | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskCategory, setNewTaskCategory] = useState<Category>('other');
+  const [newTaskPriority, setNewTaskPriority] = useState<Priority>('medium');
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editCategory, setEditCategory] = useState<Category>('other');
+  const [editPriority, setEditPriority] = useState<Priority>('medium');
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [dayLoading, setDayLoading] = useState<WeekDay | null>(null);
@@ -93,8 +95,26 @@ export default function WeeklyPlanner() {
   // Función helper para obtener el emoji de la categoría
   const getCategoryEmoji = (category: Category) => {
     const categoryData = CATEGORIES.find(cat => cat.key === category);
-    return categoryData?.emoji || '📝';
+    return categoryData ? categoryData.emoji : '📝';
   };
+
+  // Función helper para obtener los colores de prioridad
+  const getPriorityColors = (priority: Priority) => {
+    const priorityData = PRIORITIES.find(p => p.key === priority);
+    return priorityData ? priorityData.color : 'bg-gray-100 text-gray-800';
+  };
+
+  // Función helper para obtener el color de borde de prioridad
+  const getPriorityBorderColor = (priority: Priority) => {
+    switch (priority) {
+      case 'high': return 'border-l-red-500';
+      case 'medium': return 'border-l-yellow-500';
+      case 'low': return 'border-l-green-500';
+      default: return 'border-l-gray-500';
+    }
+  };
+
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -159,12 +179,14 @@ export default function WeeklyPlanner() {
     setAddingTaskToDay(day);
     setNewTaskTitle('');
     setNewTaskCategory('other');
+    setNewTaskPriority('medium');
   };
 
   const cancelAddingTask = () => {
     setAddingTaskToDay(null);
     setNewTaskTitle('');
     setNewTaskCategory('other');
+    setNewTaskPriority('medium');
   };
 
   const handleAddTaskToDay = async (day: WeekDay) => {
@@ -178,13 +200,14 @@ export default function WeeklyPlanner() {
         newTaskTitle.trim(),
         day,
         dateUtils.formatDate(dayInfo.date),
-        'medium',
+        newTaskPriority,
         newTaskCategory
       );
 
       setTasks(prev => [...prev, newTask]);
       setNewTaskTitle('');
       setNewTaskCategory('other');
+      setNewTaskPriority('medium');
       setAddingTaskToDay(null);
       showToast('Tarea creada exitosamente', 'success');
       updateStats(); // Actualizar solo estadísticas
@@ -224,6 +247,7 @@ export default function WeeklyPlanner() {
     setEditingTask(task.id);
     setEditTitle(task.title);
     setEditCategory(task.category);
+    setEditPriority(task.priority);
   };
 
   const handleEditTask = async (taskId: string, newTitle: string) => {
@@ -232,7 +256,8 @@ export default function WeeklyPlanner() {
     try {
       const updatedTask = await api.updateTask(taskId, { 
         title: newTitle.trim(),
-        category: editCategory
+        category: editCategory,
+        priority: editPriority
       });
       setTasks(prev => prev.map(task => 
         task.id === taskId ? updatedTask : task
@@ -240,6 +265,7 @@ export default function WeeklyPlanner() {
       setEditingTask(null);
       setEditTitle('');
       setEditCategory('other');
+      setEditPriority('medium');
       showToast('Tarea actualizada', 'success');
     } catch (error) {
       console.error('Error updating task:', error);
@@ -337,11 +363,11 @@ export default function WeeklyPlanner() {
         style={style}
         {...listeners}
         {...attributes}
-        className={`p-4 rounded-lg border-2 transition-all cursor-move hover:shadow-md ${
+        className={`p-4 rounded-lg border-2 border-l-4 transition-all cursor-move hover:shadow-md ${
           task.completed 
             ? 'bg-green-50 border-green-200 opacity-75 dark:bg-green-900 dark:border-green-700'
             : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500'
-        } ${isDragging ? 'opacity-50' : ''}`}
+        } ${getPriorityBorderColor(task.priority)} ${isDragging ? 'opacity-50' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         {editingTask === task.id ? (
@@ -369,6 +395,27 @@ export default function WeeklyPlanner() {
                 </option>
               ))}
             </select>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Prioridad</label>
+              <div className="flex gap-2">
+                {PRIORITIES.map(priority => (
+                  <button
+                    key={priority.key}
+                    type="button"
+                    onClick={() => setEditPriority(priority.key)}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                      editPriority === priority.key
+                        ? priority.key === 'high' ? 'bg-red-500 text-white shadow-md'
+                        : priority.key === 'medium' ? 'bg-yellow-500 text-white shadow-md'
+                        : 'bg-green-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
+                    }`}
+                  >
+                    {priority.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => handleEditTask(task.id, editTitle)}
@@ -383,6 +430,7 @@ export default function WeeklyPlanner() {
                   setEditingTask(null);
                   setEditTitle('');
                   setEditCategory('other');
+                  setEditPriority('medium');
                 }}
                 variant="ghost"
                 size="icon"
@@ -406,13 +454,20 @@ export default function WeeklyPlanner() {
                 {task.completed && <Check size={14} />}
               </button>
               <span
-                className={`text-sm flex-1 leading-relaxed ${
+                className={`text-sm flex-1 leading-relaxed flex items-center ${
                   task.completed 
                     ? 'line-through text-gray-500 dark:text-gray-400'
                     : 'text-gray-900 dark:text-gray-100'
                 }`}
               >
-                <span className="mr-2">{getCategoryEmoji(task.category)}</span>
+                <span className="mr-2 flex items-center gap-1">
+                  {getCategoryEmoji(task.category)}
+                  <div className={`w-2 h-2 rounded-full ${
+                    task.priority === 'high' ? 'bg-red-500' :
+                    task.priority === 'medium' ? 'bg-yellow-500' :
+                    'bg-green-500'
+                  }`}></div>
+                </span>
                 {task.title}
               </span>
             </div>
@@ -458,7 +513,7 @@ export default function WeeklyPlanner() {
          ref={setNodeRef}
          className={`rounded-xl shadow-sm p-6 min-h-[500px] transition-all hover:shadow-md cursor-pointer ${
            isToday 
-             ? 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 ring-4 ring-blue-400 shadow-lg shadow-blue-200 dark:shadow-blue-800 border-2 border-blue-300 dark:border-blue-600' 
+             ? 'bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/30 dark:to-primary/40 ring-4 ring-primary shadow-lg shadow-primary/30 dark:shadow-primary/40 border-2 border-primary' 
              : 'bg-white dark:bg-gray-800'
          } ${
            addingTaskToDay === dayInfo.dayName ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900' : ''
@@ -476,8 +531,8 @@ export default function WeeklyPlanner() {
         <div className="text-center mb-6">
            {isToday && (
              <div className="mb-3">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-bold animate-pulse">
-                 <div className="w-2 h-2 bg-white rounded-full"></div>
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold animate-pulse">
+                 <div className="w-2 h-2 bg-primary-foreground rounded-full"></div>
                  HOY
                </div>
              </div>
@@ -489,12 +544,12 @@ export default function WeeklyPlanner() {
              </div>
            )}
            <div className={`text-4xl font-bold mb-2 ${
-             isToday ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white'
+             isToday ? 'text-primary' : 'text-gray-900 dark:text-white'
            }`}>
              {dayInfo.dayNumber}
            </div>
           <div className={`text-xl font-bold mb-1 ${
-            isToday ? 'text-blue-800 dark:text-blue-200' : 'text-gray-700 dark:text-gray-200'
+            isToday ? 'text-primary' : 'text-gray-700 dark:text-gray-200'
           }`}>
             {dayInfo.dayName === 'monday' && 'Lunes'}
             {dayInfo.dayName === 'tuesday' && 'Martes'}
@@ -546,6 +601,27 @@ export default function WeeklyPlanner() {
                     </option>
                   ))}
                 </select>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Prioridad</label>
+                  <div className="flex gap-2">
+                    {PRIORITIES.map(priority => (
+                      <button
+                        key={priority.key}
+                        type="button"
+                        onClick={() => setNewTaskPriority(priority.key)}
+                        className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                          newTaskPriority === priority.key
+                            ? priority.key === 'high' ? 'bg-red-500 text-white shadow-md'
+                            : priority.key === 'medium' ? 'bg-yellow-500 text-white shadow-md'
+                            : 'bg-green-500 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
+                        }`}
+                      >
+                        {priority.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={() => handleAddTaskToDay(dayInfo.dayName)}
