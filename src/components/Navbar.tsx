@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Menu, X, Calendar, CalendarDays, Bell, Palette } from 'lucide-react'
+import { Sun, Moon, Menu, X, Calendar, CalendarDays, Bell, Palette, List } from 'lucide-react'
 
 interface NavbarProps {
-  currentView: 'weekly' | 'monthly' | 'notifications' | 'themes'
-  onViewChange: (view: 'weekly' | 'monthly' | 'notifications' | 'themes') => void
+  currentView: 'weekly' | 'monthly' | 'tasks' | 'notifications' | 'themes'
+  onViewChange: (view: 'weekly' | 'monthly' | 'tasks' | 'notifications' | 'themes') => void
 }
 
 export default function Navbar({ currentView, onViewChange }: NavbarProps) {
@@ -86,6 +86,17 @@ export default function Navbar({ currentView, onViewChange }: NavbarProps) {
               >
                 <Calendar className="w-4 h-4" />
                 Mensual
+              </button>
+              <button
+                onClick={() => onViewChange('tasks')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  currentView === 'tasks'
+                    ? 'bg-background text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <List className="w-4 h-4" />
+                Tareas
               </button>
               <button
                 onClick={() => onViewChange('notifications')}

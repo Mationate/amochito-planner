@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import WeeklyPlanner from '@/components/WeeklyPlanner'
 import MonthlyView from '@/components/MonthlyView'
+import TasksList from '@/components/TasksList'
 import NotificationSettings from '@/components/NotificationSettings'
 import ThemeSettings from '@/components/ThemeSettings'
 import MedicationTracker from '@/components/MedicationTracker'
 import Navbar from '@/components/Navbar'
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'weekly' | 'monthly' | 'notifications' | 'themes'>('weekly')
+  const [currentView, setCurrentView] = useState<'weekly' | 'monthly' | 'tasks' | 'notifications' | 'themes'>('weekly')
   const [medicationExpanded, setMedicationExpanded] = useState(false)
 
   return (
@@ -28,6 +29,8 @@ export default function Home() {
             <WeeklyPlanner />
           ) : currentView === 'monthly' ? (
             <MonthlyView onBackToWeekly={() => setCurrentView('weekly')} />
+          ) : currentView === 'tasks' ? (
+            <TasksList />
           ) : currentView === 'notifications' ? (
             <NotificationSettings />
           ) : (
