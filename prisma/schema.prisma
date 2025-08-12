@@ -50,6 +50,37 @@ model UserPreferences {
   @@map("user_preferences")
 }
 
+model Medication {
+  id          String   @id @default(cuid())
+  name        String
+  dosage      String   // e.g., "500mg", "1 tableta"
+  intervalHours Int    // Intervalo en horas (e.g., 8 para cada 8 horas)
+  startTime   String   // Hora de inicio en formato HH:MM
+  isActive    Boolean  @default(true)
+  notes       String?  // Notas adicionales opcionales
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relación con las dosis tomadas
+  doses       MedicationDose[]
+
+  @@map("medications")
+}
+
+model MedicationDose {
+  id           String     @id @default(cuid())
+  medicationId String
+  scheduledTime DateTime  // Hora programada para esta dosis
+  takenAt      DateTime? // Hora real cuando se tomó (null si no se ha tomado)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  // Relación con el medicamento
+  medication   Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  
+  @@map("medication_doses")
+}
+
 enum Priority {
   LOW
   MEDIUM

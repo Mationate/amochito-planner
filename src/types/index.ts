@@ -43,6 +43,36 @@ export interface WeeklyPlan {
   updatedAt: Date;
 }
 
+export interface Medication {
+  id: string;
+  name: string;
+  dosage: string;
+  intervalHours: number;
+  startTime: string; // HH:MM format
+  isActive: boolean;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MedicationDose {
+  id: string;
+  medicationId: string;
+  scheduledTime: Date;
+  takenAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MedicationSchedule {
+  medication: Medication;
+  nextDose: Date;
+  isOverdue: boolean;
+  timeUntilNext: string;
+  isTaken?: boolean;
+  doseId?: string;
+}
+
 export interface WeekInfo {
   weekStart: Date;
   weekEnd: Date;
